@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="keywords" content="data assimilation, Kalman Filter, demo, JavaScript, web-app, education">
+    <meta name="author" content="Alexander Barth">
+
+    <title>matplot: pcolor</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="numeric-1.2.3.js"></script>
+    <script type="text/javascript" src="matplot.js"></script>
+    <script type="text/javascript">
+      function init() {
+    var i,x=[],y=[],z=[];
+
+    for (i=0; i < 49; i++) {
+        x[i] = i+10;
+        y[i] = Math.sin(i/5);
+        z[i] = 0;
+    }
+      
+        fig = new matplot.Figure("plot",700,500);
+        ax = fig.axes(0.1,0.1,.72,.8);
+        //ax.plot(x,y,z);
+        ax.plot(z,{color: 'red', label: 'Zero'});
+        //ax.plot([0,1],{color: 'red', label: 'Zero'});
+        //ax.plot(y,{'marker': 'o','color': 'blue', MarkerSize: 5, label: 'test'});
+        ax.plot(y,{'marker': 's','color': 'blue', MarkerSize: 15, label: 'test'});
+        //ax.plot(y,{'color': 'blue',linespec: '-.'});
+        ax.plot(x,y,{linespec: ':',color: 'blue', label: 'sin'});                  
+        //ax.plot([10,33],[10,33],{color: 'blue'});
+        //fig.draw();
+        ax.legend();
+        ax.annotation(20,0.6,0,'toto');
+
+        //ax.xLim([10,30]);
+        //ax.xtick([]);
+        //ax.ytick([]);
+        fig.draw();
+}
+
+      
+    </script>
+ </head>
+    <body onload="init()">
+    <h1>matplot: pcolor</h1>
+    <div id="plot">
+    </div>
+  </body>
+</html>
