@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="keywords" content="data assimilation, Kalman Filter, demo, JavaScript, web-app, education">
+    <meta name="author" content="Alexander Barth">
+
+    <title>matplot: pcolor</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="numeric-1.2.3.js"></script>
+    <script type="text/javascript" src="matplot.js"></script>
+    <script type="text/javascript">
+      function init() {
+      
+        peaks = matplot.peaks();
+        fig = new matplot.Figure("plot",700,500);
+        ax = fig.axes(0.1,0.1,.72,.8);
+        ax.pcolor(peaks.x,peaks.y,peaks.z);
+        ax.colorbar();
+        fig.draw();
+
+     console.log('fig.cLim() ',ax.cLim());
+     ax.cLim([-20,20]);
+     console.log('fig.cLim() ',ax.cLim());
+     ax.cLimMode('auto');
+     console.log('fig.cLim() ',ax.cLim());
+     //ax.cLimMode('garbage');
+}
+
+      
+    </script>
+ </head>
+    <body onload="init()">
+    <h1>matplot: pcolor</h1>
+
+    <div id="plot">
+    </div>
+  </body>
+</html>

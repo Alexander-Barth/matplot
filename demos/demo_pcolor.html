@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="keywords" content="data assimilation, Kalman Filter, demo, JavaScript, web-app, education">
+    <meta name="author" content="Alexander Barth">
+
+    <title>matplot: pcolor</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="numeric-1.2.3.js"></script>
+    <script type="text/javascript" src="matplot.js"></script>
+    <script type="text/javascript">
+      function init() {
+    var i,j,x=[],y=[],z=[];
+    var f = function(x,y) { 
+        return 3*(1-x)*(1-x)*Math.exp(-x*x - (y+1)*(y+1))
+            - 10*(x/5 - x*x*x - Math.pow(y,5))*Math.exp(-x*x-y*y) 
+            - 1/3*Math.exp(-(x+1)*(x+1) - y*y); }
+
+    for (i=0; i < 49; i++) {
+        x[i] = [];
+        y[i] = [];
+        z[i] = [];
+
+        for (j=0; j < 49; j++) {
+            x[i][j] = -3 + i/8;
+            y[i][j] = -3 + j/8;
+            z[i][j] = f(x[i][j],y[i][j]);
+            y[i][j] = -3 + j/8 + x[i][j];
+        }
+    }
+        fig = new matplot.Figure("plot",700,500);
+        ax = fig.axes(0.1,0.1,.72,.8);
+        ax.pcolor(x,y,z);
+        ax.colorbar();
+        fig.draw();
+}
+
+      
+    </script>
+ </head>
+    <body onload="init()">
+    <h1>matplot: pcolor</h1>
+
+    <div id="plot">
+    </div>
+  </body>
+</html>
