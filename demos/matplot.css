@@ -1,0 +1,42 @@
+body {
+  font-family: sans-serif, Verdana;
+/*font-family:'Lucida Casual', 'Comic Sans MS';*/
+  min-width: 480px;
+}
+
+h1 {
+ color: #008;
+ margin: 0.1em 0px;
+ text-shadow: rgba(0, 0, 0, 0.5) 0 2px 2px;
+}
+
+
+
+.matplot-contextmenu {
+    border: 1px solid #CCC;
+    background-color: white;
+    box-shadow: 0px 5px 10px gray;
+    border-radius: 5px;
+    padding: 3px 0px;
+}
+
+.matplot-contextmenu li {
+    list-style-type: none;
+}
+
+.matplot-contextmenu ul {
+    margin: 0;
+    padding: 0;
+}
+
+.matplot-contextmenu a {    
+   text-decoration: none;
+   color: #000;
+   padding: 3px 2em;
+   display: block;
+}
+
+.matplot-contextmenu a:hover{
+  background-color: #555;
+  color: white;
+}
