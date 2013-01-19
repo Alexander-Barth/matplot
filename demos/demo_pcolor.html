@@ -1,25 +1,25 @@
+
 <!DOCTYPE html>
 <html>
  <head>
    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="keywords" content="data assimilation, Kalman Filter, demo, JavaScript, web-app, education">
-    <meta name="author" content="Alexander Barth">
+   <meta name="author" content="Alexander Barth">
 
-    <title>matplot: pcolor</title>
-    <link href="style.css" rel="stylesheet" type="text/css" />
-    <link href="matplot.css" rel="stylesheet" type="text/css" />
+   <title>matplot: pcolor on non-rectangular grid</title>
+   <link href="style.css" rel="stylesheet" type="text/css" />
+   <link href="prettify/prettify.css" type="text/css" rel="stylesheet" />
+   <script type="text/javascript" src="prettify/prettify.js"></script>
+   <script type="text/javascript" src="numeric-1.2.3.js"></script>
+   <link href="matplot.css" rel="stylesheet" type="text/css" />
+   <script type="text/javascript" src="matplot.js"></script>
 
-    <script type="text/javascript" src="numeric-1.2.3.js"></script>
-    <script type="text/javascript" src="matplot.js"></script>
-    <script type="text/javascript">
-      function init() {
-    var i,j,x=[],y=[],z=[], r, theta;
-    var f = function(x,y) { 
-        return 3*(1-x)*(1-x)*Math.exp(-x*x - (y+1)*(y+1))
-            - 10*(x/5 - x*x*x - Math.pow(y,5))*Math.exp(-x*x-y*y) 
-            - 1/3*Math.exp(-(x+1)*(x+1) - y*y); }
+   <script type="text/javascript">
+function init() {      
+  
+var i,j,x=[],y=[],z=[], r, theta;
 
-    for (i=0; i < 100; i++) {
+// generate some data to plot
+for (i=0; i < 100; i++) {
         x[i] = [];
         y[i] = [];
         z[i] = [];
@@ -32,21 +32,55 @@
             z[i][j] = Math.cos(2*theta);
         }
     }
+
+
         fig = new matplot.Figure("plot",700,500);
         ax = fig.axes(0.1,0.1,.72,.8);
         ax.pcolor(x,y,z);
         ax.colorbar();
         ax.DataAspectRatio([1,1,1]);
         fig.draw();
+
+
 }
 
-      
+addEventListener('load', function (event) { prettyPrint() }, false);
+
     </script>
  </head>
     <body onload="init()">
-    <h1>matplot: pcolor</h1>
+    <h1>matplot: pcolor on non-rectangular grid</h1>
+    <p>2D pseudo color plot on non-rectangular grid</p>
+    <div id="plot"></div>
+    <h2>Code:</h2>
+    <pre class=prettyprint>
 
-    <div id="plot">
-    </div>
+var i,j,x=[],y=[],z=[], r, theta;
+
+// generate some data to plot
+for (i=0; i < 100; i++) {
+        x[i] = [];
+        y[i] = [];
+        z[i] = [];
+
+        for (j=0; j < 100; j++) {
+            r = 20 + i;
+            theta = 2*Math.PI * j/99;
+            x[i][j] = r*Math.cos(theta);
+            y[i][j] = r*Math.sin(theta);
+            z[i][j] = Math.cos(2*theta);
+        }
+    }
+
+
+        fig = new matplot.Figure("plot",700,500);
+        ax = fig.axes(0.1,0.1,.72,.8);
+        ax.pcolor(x,y,z);
+        ax.colorbar();
+        ax.DataAspectRatio([1,1,1]);
+        fig.draw();
+
+
+    </pre>    
   </body>
 </html>

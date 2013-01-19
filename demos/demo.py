@@ -48,7 +48,7 @@ demos = [
 
     {'title': 'Plot',
      'description': 'Simple 1D line plots with different markers, anotation and legend',
-     'name': 'example1',
+     'name': 'plot',
      'javascript': '''
  var i,x=[],y=[],z=[];
 
@@ -82,9 +82,10 @@ ax.annotation(20,0.6,0,'annotation');
 fig.draw();
 '''},
 
+#############################
     {'title': 'pcolor',
      'description': '2D pseudo color plot',
-     'name': 'pcolor',
+     'name': 'peaks',
      'javascript': '''
 // load the peaks sample data
 peaks = matplot.peaks();
@@ -105,9 +106,11 @@ ax.colorbar();
 fig.draw();
 '''},
 
+#############################
+
     {'title': 'pcolor on non-rectangular grid',
      'description': '2D pseudo color plot on non-rectangular grid',
-     'name': 'pcolor-non-rect',
+     'name': 'pcolor',
      'javascript': '''
 var i,j,x=[],y=[],z=[], r, theta;
 
@@ -137,7 +140,7 @@ for (i=0; i < 100; i++) {
 '''},
     {'title': 'surface plot',
      'description': '3D pseudo color plot',
-     'name': 'surface',
+     'name': 'surf',
      'javascript': '''
 // load the peaks sample data
 peaks = matplot.peaks();
@@ -174,7 +177,7 @@ fig.draw();
 def makeDemos(demos):
     for demo in demos:
         print 'Making example:',demo['title']
-        filename = 'example_' + demo['name'] + '.html'
+        filename = 'demo_' + demo['name'] + '.html'
         f = open(filename,'w')
         f.write(str(Template(templateDef, searchList=[demo,namespace])))
         f.close();
