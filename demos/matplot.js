@@ -618,7 +618,7 @@ matplot.SVGCanvas.prototype.line = function(x,y,style) {
                             onclick: style.onclick,
                             style: {'fill': 'none',
                                     'stroke': (style.color || 'black'),
-                                    'stroke-width': (style.width || 1),
+                                    'stroke-width': (style.linewidth || 1),
                                     'stroke-dasharray': dasharray}
                            }
                           ));
@@ -700,8 +700,11 @@ matplot.arrayMap = function arrayMap(arr,fun) {
     }
 };
 
+// minimum and maximum of arr
+// returns [NaN,NaN] for empty array
+
 matplot.dataRange = function(arr) {
-    var i, tmp, min=Infinity, max=-Infinity;
+    var i, tmp, min = Infinity, max = -Infinity;
 
     matplot.arrayMap(arr,function(v) {
         if (!isNaN(v)) {
@@ -709,12 +712,23 @@ matplot.dataRange = function(arr) {
             max = Math.max(max,v);
         }
     });
-        
-    return [min,max];    
+
+    if (min === Infinity) {
+        return [NaN,NaN];
+    }
+    else {
+        return [min,max];    
+    }
 };
 
 function nz_range(lim) {
     var min = lim[0], max = lim[1];
+
+    if (isNaN(min) || isNaN(max)) {
+        min = -1;
+        max = 1;
+    }
+
     if (min === max) {
         min = min-1;
         max = max+1;
@@ -1366,8 +1380,8 @@ matplot.Axis.prototype.draw = function() {
         this._CameraUpVector = [0,1,0];
 
         if (this._DataAspectRatioMode === 'auto') {
-            this._DataAspectRatio = [(this._xLim[1]-this._xLim[0])/this.w,
-                                     (this._yLim[1]-this._yLim[0])/this.h,
+            this._DataAspectRatio = [(this._xLim[1]-this._xLim[0])/(this.w*this.fig.canvas.width),
+                                     (this._yLim[1]-this._yLim[0])/(this.h*this.fig.canvas.height),
                                      1];
         }
         
@@ -1478,10 +1492,11 @@ matplot.Axis.prototype.draw = function() {
             }
         }
     }
-    console.log('behindz ',behindz,behindind,frontz,frontind);
+    //console.log('behindz ',behindz,behindind,frontz,frontind);
     this.behindind = behindind;
-
-    if (right - left >= top - bottom) {
+/*
+    if ( (right - left) >= (top - bottom)) {
+//    if ( (right - left)/this.w >= (top - bottom)/this.h) {
         scale = this.w/2;
     } 
     else {
@@ -1496,6 +1511,7 @@ matplot.Axis.prototype.draw = function() {
     this.viewport = matplot.prod(
         // transform relative coordinates in pixels
         matplot.scale([this.fig.canvas.width,this.fig.canvas.height,1]),
+        //matplot.scale([this.fig.canvas.width,this.fig.canvas.width,1]),
         // reverse j-axis (1-j)
         matplot.translate([0,1,0]),
         matplot.scale([1,-1,1]),
@@ -1507,6 +1523,53 @@ matplot.Axis.prototype.draw = function() {
         //matplot.scale([this.w/2,this.h/2,1])
         matplot.scale([scale,scale,1])
     );
+*/
+
+    /*
+      mapping that would fill all plotting space
+    
+      [left,top]  -> [this.fig.canvas.width*this.x,this.fig.canvas.height*(1-this.y-this.h)]
+      [right,bottom]  -> [this.fig.canvas.width*(this.x+this.w),this.fig.canvas.height*(1-this.y)]
+      
+      intervals would be scaled this way:
+      
+      right-left -> this.fig.canvas.width*this.w
+      bottom-top -> this.fig.canvas.height*this.h
+
+      scaling factor (multiplying projected coordinates, times -1 for vertical coordinate)
+
+      scale_x = this.fig.canvas.width*this.w / (right-left)
+      scale_y = this.fig.canvas.height*this.h / (top-bottom)
+
+      if scale_x != scale_y we would alter the aspect ratio, therefore use a unique scaling factor.
+      We choose the smallest one to ensure that everything is inside the plotting space
+
+      scale = min(scale_x,scale_y)
+
+      if x,y projected coordinate (modelview, projection and perspective divide applied),
+      screen coordinate i,j (in pixel, upper-right is 0,0) are obtained by:
+      
+      i = this.fig.canvas.width*(this.x + this.w/2) + scale*x
+      j = this.fig.canvas.height*(1 - this.y - this.h/2) - scale*y
+
+      the point [this.fig.canvas.width*(this.x + this.w/2),this.fig.canvas.height*(1 - this.y - this.h/2) ] 
+      is the center of the plotting area            
+    */
+
+    scale = Math.min(this.fig.canvas.width*this.w / (right-left),
+                     this.fig.canvas.height*this.h / (top-bottom));
+
+
+    this.viewport = matplot.prod(
+        matplot.translate([this.fig.canvas.width*(this.x + this.w/2),
+                           this.fig.canvas.height*(1 - this.y - this.h/2),
+                           0]),
+        matplot.scale([scale,-scale,1])
+    );
+
+    console.log('upper left  ',[left,top,0,1],this.fig.canvas.width*this.w,right-left)
+    console.log('vp upper left  ',numeric.dot(this.viewport,[left,top,0,1]))
+    console.log('vp lower right ',numeric.dot(this.viewport,[right,bottom,0,1]))
 
     // inverse of this.viewport and this.projectionModelView
 
@@ -1852,8 +1915,8 @@ matplot.Axis.prototype.drawLegend = function() {
             maxWidth = Math.max(maxWidth,bbox.width);
             maxHeight = Math.max(maxHeight,bbox.height);
 
-            if (style.MarkerSize !== undefined) {
-                maxMarkerSize = Math.max(maxMarkerSize,style.MarkerSize);
+            if (style.markersize !== undefined) {
+                maxMarkerSize = Math.max(maxMarkerSize,style.markersize);
             }
 
             n = n+1;
@@ -2066,9 +2129,8 @@ matplot.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
                 };
             }(l));
         }
-                //,
-                                    //info: 'info:' + x[l] + ',' + y[l]
-        ms = style.MarkerSize || 3;
+
+        ms = style.markersize || 7;
 
         if (style.marker === 'o') {
             opt.fill = style.MarkerFaceColor;

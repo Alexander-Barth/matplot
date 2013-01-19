@@ -12,31 +12,34 @@
     <script type="text/javascript" src="matplot.js"></script>
     <script type="text/javascript">
       function init() {
-    var i,x=[],y=[],z=[];
+      var i,x=[],y=[],z=[];
 
-    for (i=0; i < 49; i++) {
-        x[i] = i+10;
+      for (i=0; i < 49; i++) {
+        x[i] = i+3;
         y[i] = Math.sin(i/5);
-        z[i] = 0;
+        z[i] = Math.sin((i+3)/5);
     }
       
         fig = new matplot.Figure("plot",700,500);
         ax = fig.axes(0.1,0.1,.72,.8);
-        //ax.plot(x,y,z);
-        ax.plot(z,{color: 'red', label: 'Zero'});
-        //ax.plot([0,1],{color: 'red', label: 'Zero'});
-        //ax.plot(y,{'marker': 'o','color': 'blue', MarkerSize: 5, label: 'test'});
-        ax.plot(y,{'marker': 's','color': 'blue', MarkerSize: 15, label: 'test'});
-        //ax.plot(y,{'color': 'blue',linespec: '-.'});
-        ax.plot(x,y,{linespec: ':',color: 'blue', label: 'sin'});                  
-        //ax.plot([10,33],[10,33],{color: 'blue'});
-        //fig.draw();
-        ax.legend();
-        ax.annotation(20,0.6,0,'toto');
 
-        //ax.xLim([10,30]);
-        //ax.xtick([]);
-        //ax.ytick([]);
+        // simple plot using indices as x-axis and values in parameter z as y-axis
+        // The curve is draw with the given color. The label will be used later in the legend
+        ax.plot(z,{color: 'red', label: 'foo'});
+              
+        // define marker and marker size
+        ax.plot(y,{color: 'blue', marker: 'o', markersize: 5, label: 'bar'});
+         
+        // make a dotted line with linespec
+        ax.plot(x,y,{color: 'green', marker: 's', linewidth: 2, label: 'baz'});
+
+        // add legend
+        ax.legend();
+
+        // add annotation at the location x=20, y=0.6 and z=0 with the given text
+        ax.annotation(20,0.6,0,'annotation');
+
+        // draw everything
         fig.draw();
 }
 
@@ -44,7 +47,7 @@
     </script>
  </head>
     <body onload="init()">
-    <h1>matplot: pcolor</h1>
+    <h1>matplot: plot</h1>
     <div id="plot">
     </div>
   </body>
