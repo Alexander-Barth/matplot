@@ -682,7 +682,7 @@ matplot.subsref = function subsref(arr,ind) {
             return subsref(x,ind.slice(1));
         }
     }
-}
+};
 
 matplot.arrayMap = function arrayMap(arr,fun) {
     var i, tmp;
@@ -721,7 +721,7 @@ matplot.dataRange = function(arr) {
     }
 };
 
-function nz_range(lim) {
+matplot.prettyRange = function (lim) {
     var min = lim[0], max = lim[1];
 
     if (isNaN(min) || isNaN(max)) {
@@ -734,7 +734,7 @@ function nz_range(lim) {
         max = max+1;
     }
     return [min,max];
-}
+};
 
 
 matplot.Surface = function Surface(x,y,z,c,style) {
@@ -1328,11 +1328,11 @@ matplot.Axis.prototype.draw = function() {
 
 
     // range for plotting which is never zero in length
-    this._xLim = nz_range(this._xrange);
-    this._yLim = nz_range(this._yrange);
-    this._zLim = nz_range(this._zrange);
+    this._xLim = matplot.prettyRange(this._xrange);
+    this._yLim = matplot.prettyRange(this._yrange);
+    this._zLim = matplot.prettyRange(this._zrange);
 
-    this.cmap.cLim = nz_range(this._crange);
+    this.cmap.cLim = matplot.prettyRange(this._crange);
 
     is2D = this.is2dim();
 
@@ -1567,9 +1567,9 @@ matplot.Axis.prototype.draw = function() {
         matplot.scale([scale,-scale,1])
     );
 
-    console.log('upper left  ',[left,top,0,1],this.fig.canvas.width*this.w,right-left)
-    console.log('vp upper left  ',numeric.dot(this.viewport,[left,top,0,1]))
-    console.log('vp lower right ',numeric.dot(this.viewport,[right,bottom,0,1]))
+    console.log('upper left  ',[left,top,0,1],this.fig.canvas.width*this.w,right-left);
+    console.log('vp upper left  ',numeric.dot(this.viewport,[left,top,0,1]));
+    console.log('vp lower right ',numeric.dot(this.viewport,[right,bottom,0,1]));
 
     // inverse of this.viewport and this.projectionModelView
 
