@@ -7,40 +7,49 @@
 
     <title>matplot: plot</title>
     <link href="style.css" rel="stylesheet" type="text/css" />
-    <link href="matplot.css" rel="stylesheet" type="text/css" />
+
+    <link href="prettify/prettify.css" type="text/css" rel="stylesheet" />
+    <script type="text/javascript" src="prettify/prettify.js"></script>
+
     <script type="text/javascript" src="numeric-1.2.3.js"></script>
+
+    <link href="matplot.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" src="matplot.js"></script>
+
     <script type="text/javascript">
-      function init() {
-      var i,x=[],y=[],z=[];
+ function init() {      
 
-      for (i=0; i < 49; i++) {
-        x[i] = i+3;
-        y[i] = Math.sin(i/5);
-        z[i] = Math.sin((i+3)/5);
-    }
+ var i,x=[],y=[],z=[];
+
+ prettyPrint();
+
+ for (i=0; i < 49; i++) {
+   x[i] = i+3;
+   y[i] = Math.sin(i/5);
+   z[i] = Math.sin((i+3)/5);
+ }
+ 
+fig = new matplot.Figure("plot",700,500);
+ax = fig.axes(0.1,0.1,.72,.8);
+
+// simple plot using indices as x-axis and values in parameter z as y-axis
+// The curve is draw with the given color. The label will be used later in the legend
+ax.plot(z,{color: 'red', label: 'foo'});
       
-        fig = new matplot.Figure("plot",700,500);
-        ax = fig.axes(0.1,0.1,.72,.8);
+// define marker and marker size
+ax.plot(y,{color: 'blue', marker: 'o', markersize: 5, label: 'bar'});
+ 
+// make a dotted line with linespec
+ax.plot(x,y,{color: 'green', marker: 's', linewidth: 2, label: 'baz'});
 
-        // simple plot using indices as x-axis and values in parameter z as y-axis
-        // The curve is draw with the given color. The label will be used later in the legend
-        ax.plot(z,{color: 'red', label: 'foo'});
-              
-        // define marker and marker size
-        ax.plot(y,{color: 'blue', marker: 'o', markersize: 5, label: 'bar'});
-         
-        // make a dotted line with linespec
-        ax.plot(x,y,{color: 'green', marker: 's', linewidth: 2, label: 'baz'});
+// add legend
+ax.legend();
 
-        // add legend
-        ax.legend();
+// add annotation at the location x=20, y=0.6 and z=0 with the given text
+ax.annotation(20,0.6,0,'annotation');
 
-        // add annotation at the location x=20, y=0.6 and z=0 with the given text
-        ax.annotation(20,0.6,0,'annotation');
-
-        // draw everything
-        fig.draw();
+// draw everything
+fig.draw();
 }
 
       
@@ -50,5 +59,40 @@
     <h1>matplot: plot</h1>
     <div id="plot">
     </div>
+
+<pre class=prettyprint>
+ var i,x=[],y=[],z=[];
+
+ prettyPrint();
+
+ for (i=0; i < 49; i++) {
+   x[i] = i+3;
+   y[i] = Math.sin(i/5);
+   z[i] = Math.sin((i+3)/5);
+ }
+ 
+fig = new matplot.Figure("plot",700,500);
+ax = fig.axes(0.1,0.1,.72,.8);
+
+// simple plot using indices as x-axis and values in parameter z as y-axis
+// The curve is draw with the given color. The label will be used later in the legend
+ax.plot(z,{color: 'red', label: 'foo'});
+      
+// define marker and marker size
+ax.plot(y,{color: 'blue', marker: 'o', markersize: 5, label: 'bar'});
+ 
+// make a dotted line with linespec
+ax.plot(x,y,{color: 'green', marker: 's', linewidth: 2, label: 'baz'});
+
+// add legend
+ax.legend();
+
+// add annotation at the location x=20, y=0.6 and z=0 with the given text
+ax.annotation(20,0.6,0,'annotation');
+
+// draw everything
+fig.draw();
+</pre>
+    
   </body>
 </html>
