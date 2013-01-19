@@ -3,7 +3,7 @@ from Cheetah.Template import Template
 
 
 version = '0.1.1';
-namespace = {'EarthGL_lib': '../EarthGL-' + version + '.js', 'version': version};
+namespace = {'matplot_lib': '../matplot-' + version + '.js', 'version': version};
 
 
 templateDef='''
