@@ -915,6 +915,9 @@ matplot.Axis = function Axis(fig,x,y,w,h) {
     };
     this.annotatedElements = [];
     this._annotations = [];
+
+    // all rendered elements
+    this.renderedElements = [];
 };
 
 function getterSetterMode(func,prop,mode) {
@@ -1589,9 +1592,20 @@ matplot.Axis.prototype.draw = function() {
                              this.fig.canvas.width*this.w,
                              this.fig.canvas.height*this.h);
 
+    this.renderedElements = [];
+
     // draw all children
-    for (i = 0; i<this.children.length; i++) {
+    for (i = 0; i < this.children.length; i++) {
         this.children[i].draw(this);
+    }
+
+    // sort all rendered elements depending on zIndex
+    this.renderedElements.sort(function(x,y) { return x.zIndex - y.zIndex; })
+
+    // pass all rendered elements to canvas
+    for (i = 0; i < this.renderedElements.length; i++) {
+        var elem = this.renderedElements[i];        
+        elem.fun.apply(this.fig.canvas,elem.args);
     }
 
     // exit clip rectangle
@@ -1959,7 +1973,7 @@ matplot.Axis.prototype.drawLegend = function() {
 };
 
 matplot.Axis.prototype.rect = function(x,y,v) {
-    var color, info = null;
+    var color;
     var ll = this.project([x[0],y[1]]);
     var up = this.project([x[1],y[0]]);
 
@@ -1968,12 +1982,11 @@ matplot.Axis.prototype.rect = function(x,y,v) {
     }
     else {
         color = this.cmap.get(v);
-        info = v.toString();
     }
 
     this.fig.canvas.rect(ll[0],ll[1],
                          up[0] - ll[0],up[1] - ll[1],
-                         {fill: color,stroke: color,info: info});
+                         {fill: color,stroke: color});
 };
 
 
@@ -1981,16 +1994,25 @@ matplot.Axis.prototype.text = function(x,y,z,string,style) {
     var pos;
 
     pos = this.project([x,y,z]);
+
+/*    this.renderedElements.push(
+        {'zIndex': pos[2],
+         'fun': this.fig.canvas.text,
+         'args': [pos[0],pos[1],string,style]});
+*/
     this.fig.canvas.text(pos[0],pos[1],string,style);
+
+
 };
 
 matplot.Axis.prototype.polygon = function(x,y,z,v) {
-    var pos, i = [], j = [], l, color, onclick, that = this;
+    var pos, i = [], j = [], zindex = [], l, color, onclick, that = this;
 
     for (l = 0; l < x.length; l++) {
         pos = this.project([x[l],y[l],z[l]]);
         i.push(pos[0]);
         j.push(pos[1]);
+        zindex.push(pos[2]);
     }
     color = this.cmap.get(v);
 
@@ -2011,10 +2033,18 @@ matplot.Axis.prototype.polygon = function(x,y,z,v) {
         };
     }(l));
 
+    this.renderedElements.push(
+        {'zIndex': Math.min.apply(null,zindex),
+         'fun': this.fig.canvas.polygon,
+         'args': [i,j,{fill: color,
+                       stroke: color,
+                       onclick: onclick
+                      }]});
+/*
     this.fig.canvas.polygon(i,j,{fill: color,
                                  stroke: color,
                                  onclick: onclick
-                                });
+                                });*/
 };
 
 matplot.Axis.prototype.annotation = function(x,y,z,text,style) {
@@ -2152,10 +2182,15 @@ matplot.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
 
 
 matplot.Axis.prototype.colorbar = function() {
-    var cax, cmap, cLim, i, x, y,
-        n = 64, tmp;
+    var cax, cmap, cLim, i, x, y, w,
+    n = 64, tmp, colorbarWidth = 100, /* pixels */
+    margin = 10, width = 40, labelSpace = 40;
 
-    cax = this.fig.axes(0.85,0.1,0.05,0.8);
+    w = (2*margin + width + labelSpace)/this.fig.canvas.width;
+
+    cax = this.fig.axes(1-w,0.1, 
+                        width/this.fig.canvas.width,0.8);
+
     cax.yAxisLocation = 'right';
     cax.xTickMode = 'manual';
     cax.xTick = [];
@@ -2387,6 +2422,11 @@ matplot.Figure.prototype.closeContextmenu = function() {
 };
 
 matplot.Figure.prototype.axes = function(x,y,w,h) {
+    x = (x !== undefined ? x : 0.1);
+    y = (y !== undefined ? y : 0.1);
+    w = (w !== undefined ? w : 0.8);
+    h = (h !== undefined ? h : 0.8);
+
     var ax = new matplot.Axis(this,x,y,w,h);
     this._axes.push(ax);
     return ax;
