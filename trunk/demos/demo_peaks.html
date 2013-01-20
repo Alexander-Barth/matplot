@@ -23,7 +23,7 @@ peaks = matplot.peaks();
 fig = new matplot.Figure("plot",700,500);
 
 // add axis to the figure
-ax = fig.axes(0.1,0.1,.72,.8);
+ax = fig.axes();
 
 // pseudo color plot
 ax.pcolor(peaks.x,peaks.y,peaks.z);
