@@ -31,15 +31,14 @@ for (i=0; i < 100; i++) {
             y[i][j] = r*Math.sin(theta);
             z[i][j] = Math.cos(2*theta);
         }
-    }
+}
 
-
-        fig = new matplot.Figure("plot",700,500);
-        ax = fig.axes(0.1,0.1,.72,.8);
-        ax.pcolor(x,y,z);
-        ax.colorbar();
-        ax.DataAspectRatio([1,1,1]);
-        fig.draw();
+fig = new matplot.Figure("plot",700,500);
+ax = fig.axes();
+ax.pcolor(x,y,z);
+ax.colorbar();
+ax.DataAspectRatio([1,1,1]);
+fig.draw();
 
 
 }
@@ -70,15 +69,14 @@ for (i=0; i < 100; i++) {
             y[i][j] = r*Math.sin(theta);
             z[i][j] = Math.cos(2*theta);
         }
-    }
+}
 
-
-        fig = new matplot.Figure("plot",700,500);
-        ax = fig.axes(0.1,0.1,.72,.8);
-        ax.pcolor(x,y,z);
-        ax.colorbar();
-        ax.DataAspectRatio([1,1,1]);
-        fig.draw();
+fig = new matplot.Figure("plot",700,500);
+ax = fig.axes();
+ax.pcolor(x,y,z);
+ax.colorbar();
+ax.DataAspectRatio([1,1,1]);
+fig.draw();
 
 
     </pre>    

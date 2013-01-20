@@ -60,7 +60,7 @@ demos = [
  
 // make a figure of size 700 x 500 pixels
 fig = new matplot.Figure("plot",700,500);
-ax = fig.axes(0.1,0.1,.72,.8);
+ax = fig.axes();
 
 // simple plot using indices as x-axis and values in parameter z as y-axis
 // The curve is draw with the given color. The label will be used later in the legend
@@ -94,7 +94,7 @@ peaks = matplot.peaks();
 fig = new matplot.Figure("plot",700,500);
 
 // add axis to the figure
-ax = fig.axes(0.1,0.1,.72,.8);
+ax = fig.axes();
 
 // pseudo color plot
 ax.pcolor(peaks.x,peaks.y,peaks.z);
@@ -127,15 +127,14 @@ for (i=0; i < 100; i++) {
             y[i][j] = r*Math.sin(theta);
             z[i][j] = Math.cos(2*theta);
         }
-    }
+}
 
-
-        fig = new matplot.Figure("plot",700,500);
-        ax = fig.axes(0.1,0.1,.72,.8);
-        ax.pcolor(x,y,z);
-        ax.colorbar();
-        ax.DataAspectRatio([1,1,1]);
-        fig.draw();
+fig = new matplot.Figure("plot",700,500);
+ax = fig.axes();
+ax.pcolor(x,y,z);
+ax.colorbar();
+ax.DataAspectRatio([1,1,1]);
+fig.draw();
 
 '''},
     {'title': 'surface plot',
@@ -149,12 +148,12 @@ peaks = matplot.peaks();
 fig = new matplot.Figure("plot",700,500);
 
 // add axis to the figure
-ax = fig.axes(0.1,0.1,.72,.8);
+ax = fig.axes();
 
 // pseudo color plot
 ax.surf(peaks.x,peaks.y,peaks.z);
 
-ax.CameraPosition([27.394,  35.701,   25.981]);
+//ax.CameraPosition([27.394,  35.701,   25.981]);
 
 // add color-bar
 ax.colorbar();
