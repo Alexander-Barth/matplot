@@ -2184,12 +2184,24 @@ matplot.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
 matplot.Axis.prototype.colorbar = function() {
     var cax, cmap, cLim, i, x, y, w,
     n = 64, tmp, colorbarWidth = 100, /* pixels */
-    margin = 10, width = 40, labelSpace = 40;
+    margin = 20, width = 40, labelSpace = 40;
 
-    w = (2*margin + width + labelSpace)/this.fig.canvas.width;
+    // relative units
+    margin = margin/this.fig.canvas.width;
+    width = width/this.fig.canvas.width;
+    labelSpace = labelSpace/this.fig.canvas.width;
 
-    cax = this.fig.axes(1-w,0.1, 
-                        width/this.fig.canvas.width,0.8);
+    // total width including margin and space for labels
+    w = 2*margin + width + labelSpace;
+    
+    // check if there is enought space
+    if (1 - this.x - this.w < w) {
+        // reduce width of axis to make space
+        this.w = 1 - this.x - w;
+    }
+
+    cax = this.fig.axes(1 - (margin + width + labelSpace),0.1, 
+                        width,0.8);
 
     cax.yAxisLocation = 'right';
     cax.xTickMode = 'manual';
