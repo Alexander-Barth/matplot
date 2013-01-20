@@ -2184,7 +2184,7 @@ matplot.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
 matplot.Axis.prototype.colorbar = function() {
     var cax, cmap, cLim, i, x, y, w,
     n = 64, tmp, colorbarWidth = 100, /* pixels */
-    margin = 20, width = 40, labelSpace = 40;
+    margin = 20, width = 30, labelSpace = 40;
 
     // relative units
     margin = margin/this.fig.canvas.width;
