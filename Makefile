@@ -1,6 +1,6 @@
 YUICOMPRESSOR=/home/abarth/Downloads/yuicompressor-2.4.2/build/yuicompressor-2.4.2.jar
 
-SOURCE=demo/matplot.js
+SOURCE=demos/matplot.js
 
 LICENCE_HEADER=admin/license_header
 VERSION=0.1.1
@@ -15,7 +15,7 @@ all: $(TARGET_MIN) demo
 
 
 $(TARGET): $(SOURCE)
-	cat $(LICENCE_HEADER) $(SOURCE) > $(TARGET)
+	cat $(SOURCE) > $(TARGET)
 
 $(TARGET_MIN): $(TARGET)
 	cp $(LICENCE_HEADER) $(TARGET_MIN)
