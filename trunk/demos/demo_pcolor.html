@@ -20,17 +20,17 @@ var i,j,x=[],y=[],z=[], r, theta;
 
 // generate some data to plot
 for (i=0; i < 100; i++) {
-        x[i] = [];
-        y[i] = [];
-        z[i] = [];
+  x[i] = [];
+  y[i] = [];
+  z[i] = [];
 
-        for (j=0; j < 100; j++) {
-            r = 20 + i;
-            theta = 2*Math.PI * j/99;
-            x[i][j] = r*Math.cos(theta);
-            y[i][j] = r*Math.sin(theta);
-            z[i][j] = Math.cos(2*theta);
-        }
+  for (j=0; j < 100; j++) {
+    r = 20 + i;
+    theta = 2*Math.PI * j/99;
+    x[i][j] = r*Math.cos(theta);
+    y[i][j] = r*Math.sin(theta);
+    z[i][j] = Math.cos(2*theta);
+  }
 }
 
 fig = new matplot.Figure("plot",700,500);
@@ -58,17 +58,17 @@ var i,j,x=[],y=[],z=[], r, theta;
 
 // generate some data to plot
 for (i=0; i < 100; i++) {
-        x[i] = [];
-        y[i] = [];
-        z[i] = [];
+  x[i] = [];
+  y[i] = [];
+  z[i] = [];
 
-        for (j=0; j < 100; j++) {
-            r = 20 + i;
-            theta = 2*Math.PI * j/99;
-            x[i][j] = r*Math.cos(theta);
-            y[i][j] = r*Math.sin(theta);
-            z[i][j] = Math.cos(2*theta);
-        }
+  for (j=0; j < 100; j++) {
+    r = 20 + i;
+    theta = 2*Math.PI * j/99;
+    x[i][j] = r*Math.cos(theta);
+    y[i][j] = r*Math.sin(theta);
+    z[i][j] = Math.cos(2*theta);
+  }
 }
 
 fig = new matplot.Figure("plot",700,500);
