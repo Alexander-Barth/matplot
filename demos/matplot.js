@@ -25,18 +25,15 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-/*jslint browse: true, continue : true, devel : true, indent : 4, maxerr : 50, newcap : false, plusplus : false, regexp : true, sloppy : true, vars : true, white : false, nomen: false */
-/*global jQuery: false, $: false, numeric: false, MathJax: false, XMLSerializer: false, Blob: false, URL: false, WheelEvent */
-
-"use strict";
-
-var matplot = {};
+/*jslint browse: true, continue : true, devel : true, indent : 4, maxerr : 50, newcap : false, plusplus : false, regexp : true, vars : false, white : false, nomen: false */
+/*global numeric: false, XMLSerializer: false, Blob: false, URL: false, WheelEvent: false */
 
 // creates a global "addwheelListener" method
 // example: addWheelListener( elem, function( e ) { console.log( e.deltaY ); e.preventDefault(); } );
 // https://developer.mozilla.org/en-US/docs/Mozilla_event_reference/wheel
 
 (function(window,document) {
+    "use strict";
  
     var prefix = "", _addEventListener, onwheel, support;
  
@@ -124,7 +121,12 @@ var matplot = {};
 }(window,document));
 
 
-matplot.colormaps = {'jet':
+var matplot = (function() {
+"use strict";
+
+var mp = {};
+
+mp.colormaps = {'jet':
             [
    [0.000000000000000,0.000000000000000,0.500000000000000],
    [0.000000000000000,0.000000000000000,0.563492063492063],
@@ -193,7 +195,7 @@ matplot.colormaps = {'jet':
            };
 
 
-matplot.peaks = function() {
+mp.peaks = function() {
     var i,j,x=[],y=[],z=[];
     var f = function(x,y) {
         return 3*(1-x)*(1-x)*Math.exp(-x*x - (y+1)*(y+1))
@@ -215,7 +217,7 @@ matplot.peaks = function() {
     return {x: x, y: y, z:z};
 };
 
-matplot.range = function (start,end,step) {
+mp.range = function (start,end,step) {
     var i, r = [];
     step = step || 1;
 
@@ -228,7 +230,7 @@ matplot.range = function (start,end,step) {
 // Propose about n ticks for range (min,max)
 // Code taken from yapso
 
-matplot.ticks = function ticks(min,max,n) {
+mp.ticks = function ticks(min,max,n) {
     var nt, range, dt, base, sdt, t0, i;
 
     // a least 2 ticks
@@ -292,7 +294,7 @@ matplot.ticks = function ticks(min,max,n) {
 
 };
 
-matplot.remove_spurious_decimals = function(s) {
+mp.remove_spurious_decimals = function(s) {
     var re1,re2,s2,s3;
 
     if (typeof(s) === "number") {
@@ -313,7 +315,7 @@ matplot.remove_spurious_decimals = function(s) {
 //
 //
 
-matplot.mk = function mk(xmlns,tag,attribs,children) {
+mp.mk = function mk(xmlns,tag,attribs,children) {
     var elem, child, a, c, style, obj, s;
 
     attribs = attribs || {};
@@ -369,12 +371,12 @@ matplot.mk = function mk(xmlns,tag,attribs,children) {
     return elem;
 };
 
-matplot.html = function mk(tag,attribs,children) {
-    return matplot.mk('',tag,attribs,children);
+mp.html = function mk(tag,attribs,children) {
+    return mp.mk('',tag,attribs,children);
 };
 
 
-matplot.SVGCanvas = function SVGCanvas(container,width,height) {
+mp.SVGCanvas = function SVGCanvas(container,width,height) {
     this.xmlns = "http://www.w3.org/2000/svg";
     this.width = width;
     this.height = height;
@@ -393,42 +395,42 @@ matplot.SVGCanvas = function SVGCanvas(container,width,height) {
     this.idconter = 0;
 };
 
-matplot.SVGCanvas.prototype.id = function () {
+mp.SVGCanvas.prototype.id = function () {
     return 'matplot' + (this.idconter++);
 };
 
-matplot.SVGCanvas.prototype.push = function (elem) {
+mp.SVGCanvas.prototype.push = function (elem) {
     this.parentStack.push(elem);
 };
 
-matplot.SVGCanvas.prototype.pop = function () {
+mp.SVGCanvas.prototype.pop = function () {
     return this.parentStack.pop();
 };
 
-matplot.SVGCanvas.prototype.parent = function () {
+mp.SVGCanvas.prototype.parent = function () {
     return this.parentStack[this.parentStack.length-1];
 };
 
-matplot.SVGCanvas.prototype.mk = function mk(tag,attribs,children) {
+mp.SVGCanvas.prototype.mk = function mk(tag,attribs,children) {
     var xmlns = "http://www.w3.org/2000/svg";
-    return matplot.mk(xmlns,tag,attribs,children);
+    return mp.mk(xmlns,tag,attribs,children);
 };
 
-matplot.SVGCanvas.prototype.append = function(elem) {
+mp.SVGCanvas.prototype.append = function(elem) {
 
 };
 
-matplot.SVGCanvas.prototype.remove = function(elem) {
+mp.SVGCanvas.prototype.remove = function(elem) {
     this.parent().removeChild(elem);
 };
 
-matplot.SVGCanvas.prototype.clear = function() {
+mp.SVGCanvas.prototype.clear = function() {
     while (this.parent().firstChild) {
         this.parent().removeChild(this.parent().firstChild);    
     }
 };
 
-matplot.SVGCanvas.prototype.clipRect = function(x,y,w,h) {
+mp.SVGCanvas.prototype.clipRect = function(x,y,w,h) {
     var id = this.id();
 
     this.parent().appendChild(
@@ -441,7 +443,7 @@ matplot.SVGCanvas.prototype.clipRect = function(x,y,w,h) {
     this.push(this.group({'clip-path': 'url(#' + id + ')'}));
 };
 
-matplot.SVGCanvas.prototype.group = function(style) {
+mp.SVGCanvas.prototype.group = function(style) {
     var group;
     style = style || {};
 
@@ -452,7 +454,7 @@ matplot.SVGCanvas.prototype.group = function(style) {
     return group;
 };
 
-matplot.SVGCanvas.prototype.rect = function(x,y,width,height,style) {
+mp.SVGCanvas.prototype.rect = function(x,y,width,height,style) {
     var rect;
     style = style || {};
 
@@ -474,7 +476,7 @@ matplot.SVGCanvas.prototype.rect = function(x,y,width,height,style) {
 };
 
 
-matplot.SVGCanvas.prototype.circle = function(x,y,radius,style) {
+mp.SVGCanvas.prototype.circle = function(x,y,radius,style) {
     var circle;
     style = style || {};
 
@@ -496,7 +498,7 @@ matplot.SVGCanvas.prototype.circle = function(x,y,radius,style) {
 
 
 
-matplot.SVGCanvas.prototype.polygon = function(x,y,style) {
+mp.SVGCanvas.prototype.polygon = function(x,y,style) {
     var polygon, points = '', i;
 
     for (i = 0; i < x.length; i++) {
@@ -514,7 +516,7 @@ matplot.SVGCanvas.prototype.polygon = function(x,y,style) {
     return polygon;
 };
 
-matplot.SVGCanvas.prototype.textBBox = function(string,style) {
+mp.SVGCanvas.prototype.textBBox = function(string,style) {
     var text, FontSize, FontFamily, bbox;
 
     style = style || {};
@@ -534,7 +536,7 @@ matplot.SVGCanvas.prototype.textBBox = function(string,style) {
     return {width: bbox.width, height: bbox.height};
 };
 
-matplot.SVGCanvas.prototype.text = function(x,y,string,style) {
+mp.SVGCanvas.prototype.text = function(x,y,string,style) {
     var text, offseti, offsetj, FontSize, FontFamily, color, HorizontalAlignment, VerticalAlignment;
     var TextAnchor, dy = 0;
 
@@ -587,7 +589,7 @@ matplot.SVGCanvas.prototype.text = function(x,y,string,style) {
 };
 
 
-matplot.SVGCanvas.prototype.line = function(x,y,style) {
+mp.SVGCanvas.prototype.line = function(x,y,style) {
     var polyline, points = '', i, linespec, dasharray;
 
     linespec = style.linespec || '-';
@@ -627,7 +629,7 @@ matplot.SVGCanvas.prototype.line = function(x,y,style) {
     return polyline;
 };
 
-matplot.isArray = function(arr) {
+mp.isArray = function(arr) {
     return Object.prototype.toString.call(arr) === '[object Array]';
 };
 
@@ -646,7 +648,7 @@ matplot.isArray = function(arr) {
 // subsref(A,[':',1]) is [2,4] (the same as [A[0][1],A[1][1]])
 
 
-matplot.subsref = function subsref(arr,ind) {
+mp.subsref = function subsref(arr,ind) {
     var i = ind[0], j, x, ind2;
 
     if (i === ':') {
@@ -684,11 +686,11 @@ matplot.subsref = function subsref(arr,ind) {
     }
 };
 
-matplot.arrayMap = function arrayMap(arr,fun) {
+mp.arrayMap = function arrayMap(arr,fun) {
     var i, tmp;
 
     for (i = 0; i < arr.length; i++) {
-        if (matplot.isArray(arr[i])) {
+        if (mp.isArray(arr[i])) {
             arrayMap(arr[i],fun);
         }
         else {
@@ -703,10 +705,10 @@ matplot.arrayMap = function arrayMap(arr,fun) {
 // minimum and maximum of arr
 // returns [NaN,NaN] for empty array
 
-matplot.dataRange = function(arr) {
+mp.dataRange = function(arr) {
     var i, tmp, min = Infinity, max = -Infinity;
 
-    matplot.arrayMap(arr,function(v) {
+    mp.arrayMap(arr,function(v) {
         if (!isNaN(v)) {
             min = Math.min(min,v);
             max = Math.max(max,v);
@@ -721,7 +723,7 @@ matplot.dataRange = function(arr) {
     }
 };
 
-matplot.prettyRange = function (lim) {
+mp.prettyRange = function (lim) {
     var min = lim[0], max = lim[1];
 
     if (isNaN(min) || isNaN(max)) {
@@ -737,7 +739,7 @@ matplot.prettyRange = function (lim) {
 };
 
 
-matplot.Surface = function Surface(x,y,z,c,style) {
+mp.Surface = function Surface(x,y,z,c,style) {
     this.x = x;
     this.y = y;
     this.z = z;
@@ -745,12 +747,12 @@ matplot.Surface = function Surface(x,y,z,c,style) {
     this.style = style || {};
 };
 
-matplot.Surface.prototype.lim = function(what) {
+mp.Surface.prototype.lim = function(what) {
     var tmp = this[what];
-    return matplot.dataRange(tmp);
+    return mp.dataRange(tmp);
 };
 
-matplot.Surface.prototype.draw = function(axis) {
+mp.Surface.prototype.draw = function(axis) {
     var i,j;
 
     for (i=0; i<this.x.length-1; i++) {
@@ -771,35 +773,35 @@ matplot.Surface.prototype.draw = function(axis) {
 };
 
 
-matplot.Line = function Line(x,y,z,style) {
+mp.Line = function Line(x,y,z,style) {
     this.x = x;
     this.y = y;
     this.z = z;
     this.style = style || {};
 };
 
-matplot.Line.prototype.lim = function(what) {
+mp.Line.prototype.lim = function(what) {
     var i, min, max, tmp = this[what];
 
     if (what === 'c') {
         return [NaN,NaN];
     }
-    return matplot.dataRange(tmp);
+    return mp.dataRange(tmp);
 };
 
-matplot.Line.prototype.draw = function(axis) {
+mp.Line.prototype.draw = function(axis) {
     var i,j;
 
     axis.drawLine(this.x,this.y,this.z,this.style);
 };
 
-matplot.ColorMap = function ColorMap(cLim,type) {
+mp.ColorMap = function ColorMap(cLim,type) {
     this.cLim = cLim;
     this.type = type || 'jet';
-    this.cm = matplot.colormaps[this.type];
+    this.cm = mp.colormaps[this.type];
 };
 
-matplot.ColorMap.prototype.get = function (v) {
+mp.ColorMap.prototype.get = function (v) {
     var c=[];
     var vs = (v-this.cLim[0])/(this.cLim[1]-this.cLim[0]);
     c[0] = vs;
@@ -818,13 +820,13 @@ matplot.ColorMap.prototype.get = function (v) {
 // at location x,y and width w and height h
 // x,y,w,h are fraction of the total figure height and width
 
-matplot.Axis = function Axis(fig,x,y,w,h) {
+mp.Axis = function Axis(fig,x,y,w,h) {
     this.fig = fig;
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
-    this.cmap = new matplot.ColorMap([-1,1]);
+    this.cmap = new mp.ColorMap([-1,1]);
     this.FontFamily = "Verdana";
     this.FontSize = 15;
     this.color = 'black';
@@ -897,9 +899,9 @@ matplot.Axis = function Axis(fig,x,y,w,h) {
     this._CameraViewAngle = 10.3396;
     this._CameraViewAngleMode = 'auto';
 
-    this.xLabelFormat = function(x) {return matplot.remove_spurious_decimals(x.toString());};
-    this.yLabelFormat = function(x) {return matplot.remove_spurious_decimals(x.toString());};
-    this.zLabelFormat = function(x) {return matplot.remove_spurious_decimals(x.toString());};
+    this.xLabelFormat = function(x) {return mp.remove_spurious_decimals(x.toString());};
+    this.yLabelFormat = function(x) {return mp.remove_spurious_decimals(x.toString());};
+    this.zLabelFormat = function(x) {return mp.remove_spurious_decimals(x.toString());};
 
     this.gridLineStyle = ':';
 
@@ -978,38 +980,38 @@ function installGetterSetterMode (prop,func) {
         func = function() { this['sensible' + prop].call(this); };
     }
 
-    matplot.Axis.prototype[prop] = getterSetterMode(func,'_' + prop,'_' + prop + 'Mode');
-    matplot.Axis.prototype[prop + 'Mode'] = getterSetterVal('_' + prop + 'Mode',['auto','manual']);
+    mp.Axis.prototype[prop] = getterSetterMode(func,'_' + prop,'_' + prop + 'Mode');
+    mp.Axis.prototype[prop + 'Mode'] = getterSetterVal('_' + prop + 'Mode',['auto','manual']);
 
 }
 
 
-matplot.Axis.prototype.xLim = getterSetterMode(function() { return this.lim('x'); },'_xLim','_xLimMode');
-matplot.Axis.prototype.yLim = getterSetterMode(function() { return this.lim('y'); },'_yLim','_yLimMode');
-matplot.Axis.prototype.zLim = getterSetterMode(function() { return this.lim('z'); },'_zLim','_zLimMode');
-matplot.Axis.prototype.cLim = getterSetterMode(function() { return this.lim('c'); },'_cLim','_cLimMode');
+mp.Axis.prototype.xLim = getterSetterMode(function() { return this.lim('x'); },'_xLim','_xLimMode');
+mp.Axis.prototype.yLim = getterSetterMode(function() { return this.lim('y'); },'_yLim','_yLimMode');
+mp.Axis.prototype.zLim = getterSetterMode(function() { return this.lim('z'); },'_zLim','_zLimMode');
+mp.Axis.prototype.cLim = getterSetterMode(function() { return this.lim('c'); },'_cLim','_cLimMode');
 
-matplot.Axis.prototype.projection = getterSetterVal('_projection',['orthographic', 'perspective']);
+mp.Axis.prototype.projection = getterSetterVal('_projection',['orthographic', 'perspective']);
 
-matplot.Axis.prototype.xLimMode = getterSetterVal('_xLimMode',['auto','manual']);
-matplot.Axis.prototype.yLimMode = getterSetterVal('_yLimMode',['auto','manual']);
-matplot.Axis.prototype.zLimMode = getterSetterVal('_zLimMode',['auto','manual']);
-matplot.Axis.prototype.cLimMode = getterSetterVal('_cLimMode',['auto','manual']);
+mp.Axis.prototype.xLimMode = getterSetterVal('_xLimMode',['auto','manual']);
+mp.Axis.prototype.yLimMode = getterSetterVal('_yLimMode',['auto','manual']);
+mp.Axis.prototype.zLimMode = getterSetterVal('_zLimMode',['auto','manual']);
+mp.Axis.prototype.cLimMode = getterSetterVal('_cLimMode',['auto','manual']);
 
 
-matplot.Axis.prototype.xtick = getterSetterMode(function() { return this.xTick; },'xTick','xTickMode');
-matplot.Axis.prototype.ytick = getterSetterMode(function() { return this.yTick; },'yTick','yTickMode');
-matplot.Axis.prototype.ztick = getterSetterMode(function() { return this.zTick; },'zTick','zTickMode');
+mp.Axis.prototype.xtick = getterSetterMode(function() { return this.xTick; },'xTick','xTickMode');
+mp.Axis.prototype.ytick = getterSetterMode(function() { return this.yTick; },'yTick','yTickMode');
+mp.Axis.prototype.ztick = getterSetterMode(function() { return this.zTick; },'zTick','zTickMode');
 
-matplot.Axis.prototype.DataAspectRatio = getterSetterMode(function() { return this._DataAspectRatio; },'_DataAspectRatio','_DataAspectRatioMode');
-matplot.Axis.prototype.DataAspectRatioMode = getterSetterVal('_DataAspectRatioMode',['auto','manual']);
+mp.Axis.prototype.DataAspectRatio = getterSetterMode(function() { return this._DataAspectRatio; },'_DataAspectRatio','_DataAspectRatioMode');
+mp.Axis.prototype.DataAspectRatioMode = getterSetterVal('_DataAspectRatioMode',['auto','manual']);
 
 installGetterSetterMode('CameraPosition',function() { return this._CameraPosition; });
 installGetterSetterMode('CameraUpVector');
 
 // makes a product of all matrices provided as arguments
 
-matplot.prod = function (M) {
+mp.prod = function (M) {
     var i;
 
     for (i=1; i < arguments.length; i++) {
@@ -1019,7 +1021,7 @@ matplot.prod = function (M) {
     return M;
 };
 
-matplot.cross = function (a,b) {
+mp.cross = function (a,b) {
     var c = [];
     c[0] = a[1] * b[2] - a[2] * b[1];
     c[1] = a[2] * b[0] - a[0] * b[2];
@@ -1030,7 +1032,7 @@ matplot.cross = function (a,b) {
 // http://publib.boulder.ibm.com/infocenter/pseries/v5r3/index.jsp?topic=/com.ibm.aix.opengl/doc/openglrf/gluProject.htm
 // http://publib.boulder.ibm.com/infocenter/pseries/v5r3/index.jsp?topic=/com.ibm.aix.opengl/doc/openglrf/gluPerspective.htm
 
-matplot.perspective = function (fovy, aspect, zNear, zFar) {
+mp.perspective = function (fovy, aspect, zNear, zFar) {
     var f = 1/Math.tan(fovy/2), z = zNear-zFar;
 /*
 
@@ -1071,7 +1073,7 @@ matplot.perspective = function (fovy, aspect, zNear, zFar) {
 
 };
 
-matplot.scale = function (s) {
+mp.scale = function (s) {
     return [[s[0],0,0,0],
             [0,s[1],0,0],
             [0,0,s[2],0],
@@ -1079,7 +1081,7 @@ matplot.scale = function (s) {
 
 };
 
-matplot.translate = function (dx) {
+mp.translate = function (dx) {
     return [[1,0,0,dx[0]],
             [0,1,0,dx[1]],
             [0,0,1,dx[2]],
@@ -1092,10 +1094,10 @@ matplot.translate = function (dx) {
 
 // The box is translated so that its center is at the origin, then it is scaled to the unit cube which is defined by having a minimum corner at (-1,-1,-1) and a maximum corner at (1,1,1).
 
-matplot.ortho = function (left, right, bottom, top, near, far) {
+mp.ortho = function (left, right, bottom, top, near, far) {
     return numeric.dot(
-        matplot.scale([2/(right-left),2/(top-bottom),2/(far-near) ]),
-        matplot.translate([-(right+left)/2,-(top+bottom)/2,-(far+near)/2 ]));
+        mp.scale([2/(right-left),2/(top-bottom),2/(far-near) ]),
+        mp.translate([-(right+left)/2,-(top+bottom)/2,-(far+near)/2 ]));
 
 };
 
@@ -1108,7 +1110,7 @@ Let U be the 3d column vector (upX, upY, upZ).
 
 */
 
-matplot.LookAt = function(E,C,U) {
+mp.LookAt = function(E,C,U) {
     var L, S, Up, M;
 /*
 Compute L = C - E.
@@ -1124,11 +1126,11 @@ Compute U' = S x L.
     L = nu.mul(1/nu.norm2(L),L);
 
     // side direction to the "right" of L
-    S = matplot.cross(L,U);
+    S = mp.cross(L,U);
     S = nu.mul(1/nu.norm2(S),S);
 
     // new up vector
-    Up = matplot.cross(S,L);
+    Up = mp.cross(S,L);
 
     // turn vector
     M = [[ S[0],  S[1],  S[2],  0],
@@ -1137,16 +1139,16 @@ Compute U' = S x L.
          [0, 0, 0, 1]];
 
     // translate to the CameraPosition
-    M = numeric.dot(M,matplot.translate([-E[0], -E[1], -E[2]]));
+    M = numeric.dot(M,mp.translate([-E[0], -E[1], -E[2]]));
 
     return M;
 };
 
-matplot.Axis.prototype.zoomIn = function() {
+mp.Axis.prototype.zoomIn = function() {
     var xl = this.xLim();    
 };
 
-matplot.Axis.prototype.project = function(u,options) {
+mp.Axis.prototype.project = function(u,options) {
     var i,j, b, v, viewport, projectionModelView;
     options = options || {};
     viewport = options.viewport || this.viewport;
@@ -1182,7 +1184,7 @@ matplot.Axis.prototype.project = function(u,options) {
     return v;
 };
 
-matplot.Axis.prototype.unproject = function(u) {
+mp.Axis.prototype.unproject = function(u) {
     var i,j, b, v;
     v = [u[0],u[1],0,1];
 
@@ -1195,7 +1197,7 @@ matplot.Axis.prototype.unproject = function(u) {
     return v;
 };
 
-matplot.Axis.prototype.lim = function(what) {
+mp.Axis.prototype.lim = function(what) {
     var i, min = +Infinity, max = -Infinity, range;
 
     if (this.children.length > 0) {
@@ -1213,7 +1215,7 @@ matplot.Axis.prototype.lim = function(what) {
 };
 
 
-matplot.Axis.prototype.plot = function(x,y,z,style) {
+mp.Axis.prototype.plot = function(x,y,z,style) {
     var i, lastArg, args;
 
     // get a real array for arguments
@@ -1223,7 +1225,7 @@ matplot.Axis.prototype.plot = function(x,y,z,style) {
     // handle the case of missing style object
     if (Object.prototype.toString.call(lastArg) === '[object Array]' ) {
         args.push({});
-        return matplot.Axis.prototype.plot.apply(this,args);
+        return mp.Axis.prototype.plot.apply(this,args);
     }
 
     if (args.length === 2) {
@@ -1250,10 +1252,10 @@ matplot.Axis.prototype.plot = function(x,y,z,style) {
         }
     }
 
-    this.children.push(new matplot.Line(x,y,z,style));
+    this.children.push(new mp.Line(x,y,z,style));
 };
 
-matplot.Axis.prototype.pcolor = function(x,y,v) {
+mp.Axis.prototype.pcolor = function(x,y,v) {
     var i, j, z = [], tmpx, tmpy;
 
     if (arguments.length === 1) {
@@ -1281,7 +1283,7 @@ matplot.Axis.prototype.pcolor = function(x,y,v) {
     }
 
     // if x and y are vectors, make matrices
-    if (!matplot.isArray(x[0])) {
+    if (!mp.isArray(x[0])) {
         tmpx = x;
         tmpy = y;
 
@@ -1298,20 +1300,20 @@ matplot.Axis.prototype.pcolor = function(x,y,v) {
         }
     }
 
-    this.children.push(new matplot.Surface(x,y,z,v));
+    this.children.push(new mp.Surface(x,y,z,v));
 };
 
-matplot.Axis.prototype.surf = function(x,y,z) {
-    this.children.push(new matplot.Surface(x,y,z,z));
+mp.Axis.prototype.surf = function(x,y,z) {
+    this.children.push(new mp.Surface(x,y,z,z));
 };
 
-matplot.Axis.prototype.is2dim = function() {
+mp.Axis.prototype.is2dim = function() {
     var _zrange = this._zrange;
 
     return (_zrange[0] === _zrange[1]);
 };
 
-matplot.Axis.prototype.sensibleCameraUpVector = function() {
+mp.Axis.prototype.sensibleCameraUpVector = function() {
     if (this._projection === 'orthographic') {
         // y-direction if upward
         return [0,1,0];
@@ -1320,7 +1322,7 @@ matplot.Axis.prototype.sensibleCameraUpVector = function() {
     return [0, 0, 1];
 };
 
-matplot.Axis.prototype.draw = function() {
+mp.Axis.prototype.draw = function() {
     var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, frontz=-Infinity, frontind, scale;
 
     // real range of x, y and z variable (might be [0,0])
@@ -1331,16 +1333,16 @@ matplot.Axis.prototype.draw = function() {
 
 
     // range for plotting which is never zero in length
-    this._xLim = matplot.prettyRange(this._xrange);
-    this._yLim = matplot.prettyRange(this._yrange);
-    this._zLim = matplot.prettyRange(this._zrange);
+    this._xLim = mp.prettyRange(this._xrange);
+    this._yLim = mp.prettyRange(this._yrange);
+    this._zLim = mp.prettyRange(this._zrange);
 
-    this.cmap.cLim = matplot.prettyRange(this._crange);
+    this.cmap.cLim = mp.prettyRange(this._crange);
 
     is2D = this.is2dim();
 
     if (this.xTickMode === 'auto') {
-        this.xTick = matplot.ticks(this._xLim[0],this._xLim[1],5);
+        this.xTick = mp.ticks(this._xLim[0],this._xLim[1],5);
     }
 
     if (this.xTickLabelMode === 'auto') {
@@ -1348,7 +1350,7 @@ matplot.Axis.prototype.draw = function() {
     }
 
     if (this.yTickMode === 'auto') {
-        this.yTick = matplot.ticks(this._yLim[0],this._yLim[1],5);
+        this.yTick = mp.ticks(this._yLim[0],this._yLim[1],5);
     }
 
     if (this.yTickLabelMode === 'auto') {
@@ -1356,7 +1358,7 @@ matplot.Axis.prototype.draw = function() {
     }
 
     if (this.zTickMode === 'auto') {
-        this.zTick = matplot.ticks(this._zLim[0],this._zLim[1],5);
+        this.zTick = mp.ticks(this._zLim[0],this._zLim[1],5);
     }
 
     if (this.zTickLabelMode === 'auto') {
@@ -1423,10 +1425,10 @@ matplot.Axis.prototype.draw = function() {
     }
 
     this.modelView = numeric.dot(
-        matplot.LookAt(numeric.div(this._CameraPosition,this._DataAspectRatio),
+        mp.LookAt(numeric.div(this._CameraPosition,this._DataAspectRatio),
                        numeric.div(this._CameraTarget,this._DataAspectRatio),
                        numeric.div(this._CameraUpVector,this._DataAspectRatio)),
-        numeric.inv(matplot.scale(this._DataAspectRatio)));
+        numeric.inv(mp.scale(this._DataAspectRatio)));
     //console.log('modelView ',numeric.prettyPrint(this.modelView));
 
 
@@ -1435,7 +1437,7 @@ matplot.Axis.prototype.draw = function() {
     near = Infinity, far = -Infinity;
         
     if (this._projection === 'orthographic') {
-        //this.projection = matplot.ortho(left, right, bottom, top, near, far);
+        //this.projection = mp.ortho(left, right, bottom, top, near, far);
 
         // scaling will be done later in viewport
         this.projection = numeric.identity(4);
@@ -1444,7 +1446,7 @@ matplot.Axis.prototype.draw = function() {
         var aspect = 1;
         var zNear = -10;
         var zFar = 200;
-        this.projection = matplot.perspective(this._CameraViewAngle * Math.PI/180, aspect, zNear, zFar);
+        this.projection = mp.perspective(this._CameraViewAngle * Math.PI/180, aspect, zNear, zFar);
         //console.log('projection ',numeric.prettyPrint(this.projection));
         //console.log('Target ',this._CameraTarget);
         //console.log('MV * Target',  numeric.dot(this.modelView,[this._CameraTarget[0],this._CameraTarget[1],this._CameraTarget[2],1]));
@@ -1511,20 +1513,20 @@ matplot.Axis.prototype.draw = function() {
     right = Math.max(right,top);
     scale = scale/Math.max(right,-left);
 
-    this.viewport = matplot.prod(
+    this.viewport = mp.prod(
         // transform relative coordinates in pixels
-        matplot.scale([this.fig.canvas.width,this.fig.canvas.height,1]),
-        //matplot.scale([this.fig.canvas.width,this.fig.canvas.width,1]),
+        mp.scale([this.fig.canvas.width,this.fig.canvas.height,1]),
+        //mp.scale([this.fig.canvas.width,this.fig.canvas.width,1]),
         // reverse j-axis (1-j)
-        matplot.translate([0,1,0]),
-        matplot.scale([1,-1,1]),
+        mp.translate([0,1,0]),
+        mp.scale([1,-1,1]),
         // from [-w/2,w/2] to [x,x+w/2] 
         // (unit fraction of figure width/height)
-        matplot.translate([this.x+this.w/2,this.y+this.h/2,0]),
+        mp.translate([this.x+this.w/2,this.y+this.h/2,0]),
         // from [-1,1] to [-w/2,w/2] 
         // (unit fraction of figure width/height)
-        //matplot.scale([this.w/2,this.h/2,1])
-        matplot.scale([scale,scale,1])
+        //mp.scale([this.w/2,this.h/2,1])
+        mp.scale([scale,scale,1])
     );
 */
 
@@ -1563,11 +1565,11 @@ matplot.Axis.prototype.draw = function() {
                      this.fig.canvas.height*this.h / (top-bottom));
 
 
-    this.viewport = matplot.prod(
-        matplot.translate([this.fig.canvas.width*(this.x + this.w/2),
+    this.viewport = mp.prod(
+        mp.translate([this.fig.canvas.width*(this.x + this.w/2),
                            this.fig.canvas.height*(1 - this.y - this.h/2),
                            0]),
-        matplot.scale([scale,-scale,1])
+        mp.scale([scale,-scale,1])
     );
 
     console.log('upper left  ',[left,top,0,1],this.fig.canvas.width*this.w,right-left);
@@ -1600,7 +1602,7 @@ matplot.Axis.prototype.draw = function() {
     }
 
     // sort all rendered elements depending on zIndex
-    this.renderedElements.sort(function(x,y) { return x.zIndex - y.zIndex; })
+    this.renderedElements.sort(function(x,y) { return x.zIndex - y.zIndex; });
 
     // pass all rendered elements to canvas
     for (i = 0; i < this.renderedElements.length; i++) {
@@ -1638,7 +1640,7 @@ matplot.Axis.prototype.draw = function() {
 };
 
 
-matplot.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen) {
+mp.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen) {
     var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v=1, ref;
     var behindind = this.behindind, save_project;
 
@@ -1705,7 +1707,7 @@ matplot.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen) {
 
 
 
-matplot.Axis.prototype.drawAxisX = function(tickLabel,tickLen) {
+mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen) {
     var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v, dx, dy, dz;
     var behindind = this.behindind;
 
@@ -1819,7 +1821,7 @@ matplot.Axis.prototype.drawAxisX = function(tickLabel,tickLen) {
 };
 
 
-matplot.Axis.prototype.drawXTicks = function() {
+mp.Axis.prototype.drawXTicks = function() {
     var i, y, pos, style;
 
     style =
@@ -1866,7 +1868,7 @@ matplot.Axis.prototype.drawXTicks = function() {
 
 };
 
-matplot.Axis.prototype.drawYTicks = function() {
+mp.Axis.prototype.drawYTicks = function() {
     var i, x, pos, style;
 
     style =
@@ -1912,12 +1914,12 @@ matplot.Axis.prototype.drawYTicks = function() {
     }
 };
 
-matplot.Axis.prototype.legend = function(state) {
+mp.Axis.prototype.legend = function(state) {
     state = (state !== undefined ? state : true);
     this._legend = state;
 };
 
-matplot.Axis.prototype.drawLegend = function() {
+mp.Axis.prototype.drawLegend = function() {
     var style, label, maxWidth = -Infinity, maxHeight=-Infinity, maxMarkerSize=0, bbox, x, y, n=0, i, w, h;
 
     for (i = 0; i<this.children.length; i++) {
@@ -1972,7 +1974,7 @@ matplot.Axis.prototype.drawLegend = function() {
 
 };
 
-matplot.Axis.prototype.rect = function(x,y,v) {
+mp.Axis.prototype.rect = function(x,y,v) {
     var color;
     var ll = this.project([x[0],y[1]]);
     var up = this.project([x[1],y[0]]);
@@ -1990,7 +1992,7 @@ matplot.Axis.prototype.rect = function(x,y,v) {
 };
 
 
-matplot.Axis.prototype.text = function(x,y,z,string,style) {
+mp.Axis.prototype.text = function(x,y,z,string,style) {
     var pos;
 
     pos = this.project([x,y,z]);
@@ -2005,7 +2007,7 @@ matplot.Axis.prototype.text = function(x,y,z,string,style) {
 
 };
 
-matplot.Axis.prototype.polygon = function(x,y,z,v) {
+mp.Axis.prototype.polygon = function(x,y,z,v) {
     var pos, i = [], j = [], zindex = [], l, color, onclick, that = this;
 
     for (l = 0; l < x.length; l++) {
@@ -2047,11 +2049,11 @@ matplot.Axis.prototype.polygon = function(x,y,z,v) {
                                 });*/
 };
 
-matplot.Axis.prototype.annotation = function(x,y,z,text,style) {
+mp.Axis.prototype.annotation = function(x,y,z,text,style) {
     this._annotations.push({x: x, y: y, z: z, text: text, style: style});
 };
 
-matplot.Axis.prototype.drawAnnotation = function(x,y,z,text,style) {
+mp.Axis.prototype.drawAnnotation = function(x,y,z,text,style) {
     var bbox, pos, an = {}, padding = 4, i, j, that = this, w, h;
     style = style || {};
 
@@ -2077,13 +2079,13 @@ matplot.Axis.prototype.drawAnnotation = function(x,y,z,text,style) {
     return an;
 };
 
-matplot.Axis.prototype.removeAnnotation = function(an) {
+mp.Axis.prototype.removeAnnotation = function(an) {
     //return;
     this.fig.canvas.remove(an.text);
     this.fig.canvas.remove(an.rect);
 };
 
-matplot.Axis.prototype.toggleAnnotation = function(event,elem,x,y,z,text) {
+mp.Axis.prototype.toggleAnnotation = function(event,elem,x,y,z,text) {
     var an, i, found = -1, that = this, coord, n = this.annotationNDigits;
 
     if (!text) {
@@ -2127,7 +2129,7 @@ matplot.Axis.prototype.toggleAnnotation = function(event,elem,x,y,z,text) {
     }
 };
 
-matplot.Axis.prototype.drawLine = function(x,y,z,style) {
+mp.Axis.prototype.drawLine = function(x,y,z,style) {
     var pos, i=[], j=[], l;
     style = style || {};
 
@@ -2141,7 +2143,7 @@ matplot.Axis.prototype.drawLine = function(x,y,z,style) {
 };
 
 
-matplot.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
+mp.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
     var l, opt = {}, that = this, ms;
     style = style || {};
 
@@ -2181,7 +2183,7 @@ matplot.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
 
 
 
-matplot.Axis.prototype.colorbar = function() {
+mp.Axis.prototype.colorbar = function() {
     var cax, cmap, cLim, i, x, y, w,
     n = 64, tmp, colorbarWidth = 100, /* pixels */
     margin = 20, width = 30, labelSpace = 40;
@@ -2209,7 +2211,7 @@ matplot.Axis.prototype.colorbar = function() {
 
     cLim = this.cLim();
 
-    tmp = matplot.range(cLim[0],cLim[1],(cLim[1]-cLim[0])/(n-1));
+    tmp = mp.range(cLim[0],cLim[1],(cLim[1]-cLim[0])/(n-1));
     cmap = [tmp,tmp];
 
     x = [[],[]];
@@ -2231,20 +2233,20 @@ matplot.Axis.prototype.colorbar = function() {
 // this class represent a figure on a screen
 // should not contain SVG specific stuff
 
-matplot.Figure = function Figure(id,width,height) {
+mp.Figure = function Figure(id,width,height) {
     var that = this;
     this.container = document.getElementById(id);
 
 
     this.outerDIV =
-        matplot.html('div',
+        mp.html('div',
                      {style: {
                          position: 'relative'}
                      }
 /*,
                      [
                          this.innerDIV =
-                             matplot.html('div',
+                             mp.html('div',
                                           {style: {
                                               position: 'absolute'}
                                           },
@@ -2254,7 +2256,7 @@ matplot.Figure = function Figure(id,width,height) {
 );
 
     this.outerDIV.appendChild(
-        this.contextmenu = matplot.html('div',{
+        this.contextmenu = mp.html('div',{
             'class': 'matplot-contextmenu',
             'style': {
                 'position': 'absolute',
@@ -2263,22 +2265,22 @@ matplot.Figure = function Figure(id,width,height) {
                 'top': '0px'}
         },
                                         [
-                                            matplot.html('ul',{},[
-                                                matplot.html('li',{},[
-                                                    matplot.html('a',{'href': '#', 
+                                            mp.html('ul',{},[
+                                                mp.html('li',{},[
+                                                    mp.html('a',{'href': '#', 
                                                                       'onclick': function(ev) { return that.save(this); },
                                                                       'download': 'figure.svg'},
                                                                  ['Download'])]),
-                                                matplot.html('li',{},[
-                                                    matplot.html('a',{'href': '#', 
+                                                mp.html('li',{},[
+                                                    mp.html('a',{'href': '#', 
                                                                       'onclick': function(ev) { return that.zoom(-6,ev.pageX,ev.pageY); }}, 
                                                                  ['Zoom in'])]),
-                                                matplot.html('li',{},[
-                                                    matplot.html('a',{'href': '#', 
+                                                mp.html('li',{},[
+                                                    mp.html('a',{'href': '#', 
                                                                       'onclick': function(ev) { return that.zoom(6,ev.pageX,ev.pageY); }}, 
                                                                  ['Zoom out'])]),
-                                                matplot.html('li',{},[
-                                                    matplot.html('a',{'href': '#', 
+                                                mp.html('li',{},[
+                                                    mp.html('a',{'href': '#', 
                                                                       'onclick': function(ev) { return that.resetZoom(); }}, 
                                                                  ['Reset zoom'])])
                                             ])
@@ -2286,7 +2288,7 @@ matplot.Figure = function Figure(id,width,height) {
 
     this.container.appendChild(this.outerDIV);
 
-    this.canvas = new matplot.SVGCanvas(this.outerDIV,width,height);
+    this.canvas = new mp.SVGCanvas(this.outerDIV,width,height);
     this._axes = [];
 
 
@@ -2429,26 +2431,26 @@ matplot.Figure = function Figure(id,width,height) {
 
 };
 
-matplot.Figure.prototype.closeContextmenu = function() {
+mp.Figure.prototype.closeContextmenu = function() {
     this.contextmenu.style.display = 'none';    
 };
 
-matplot.Figure.prototype.axes = function(x,y,w,h) {
+mp.Figure.prototype.axes = function(x,y,w,h) {
     x = (x !== undefined ? x : 0.1);
     y = (y !== undefined ? y : 0.1);
     w = (w !== undefined ? w : 0.8);
     h = (h !== undefined ? h : 0.8);
 
-    var ax = new matplot.Axis(this,x,y,w,h);
+    var ax = new mp.Axis(this,x,y,w,h);
     this._axes.push(ax);
     return ax;
 };
 
-matplot.Figure.prototype.clear = function() {
+mp.Figure.prototype.clear = function() {
     this.canvas.clear();
 };
 
-matplot.Figure.prototype.save = function(elem) {
+mp.Figure.prototype.save = function(elem) {
     var s, xml, blob;
 
     s = new XMLSerializer();
@@ -2458,7 +2460,7 @@ matplot.Figure.prototype.save = function(elem) {
     this.closeContextmenu();
 };
 
-matplot.Figure.prototype.resetZoom = function() {
+mp.Figure.prototype.resetZoom = function() {
     var ax;
 
     ax = this._axes[0];
@@ -2468,7 +2470,7 @@ matplot.Figure.prototype.resetZoom = function() {
     this.closeContextmenu();
 };
 
-matplot.Figure.prototype.zoom = function(delta,pageX,pageY) {
+mp.Figure.prototype.zoom = function(delta,pageX,pageY) {
     var i,j, ax;
 
     i = pageX - this.container.offsetLeft;
@@ -2505,7 +2507,7 @@ matplot.Figure.prototype.zoom = function(delta,pageX,pageY) {
     this.draw();
 };
 
-matplot.Figure.prototype.draw = function() {
+mp.Figure.prototype.draw = function() {
     var i;
     this.clear();
 
@@ -2514,3 +2516,5 @@ matplot.Figure.prototype.draw = function() {
     }
 };
 
+    return mp;
+}());
