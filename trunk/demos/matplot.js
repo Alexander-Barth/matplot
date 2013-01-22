@@ -1572,9 +1572,9 @@ mp.Axis.prototype.draw = function() {
         mp.scale([scale,-scale,1])
     );
 
-    console.log('upper left  ',[left,top,0,1],this.fig.canvas.width*this.w,right-left);
-    console.log('vp upper left  ',numeric.dot(this.viewport,[left,top,0,1]));
-    console.log('vp lower right ',numeric.dot(this.viewport,[right,bottom,0,1]));
+    //console.log('upper left  ',[left,top,0,1],this.fig.canvas.width*this.w,right-left);
+    //console.log('vp upper left  ',numeric.dot(this.viewport,[left,top,0,1]));
+    //console.log('vp lower right ',numeric.dot(this.viewport,[right,bottom,0,1]));
 
     // inverse of this.viewport and this.projectionModelView
 
@@ -1698,8 +1698,6 @@ mp.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen) {
     this.xTick = ref[0];
     this.yTick = ref[1];
     this.zTick = ref[2];
-
-    console.log('this.behindind after ',this.behindind,this._xLim,this._yLim,this._zLim);
 };
 
 
@@ -1770,7 +1768,6 @@ mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen) {
         }
     }
 
-    console.log(style);
     j = axind[0];
     k = axind[1];
 
@@ -1782,7 +1779,6 @@ mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen) {
         
         if (j !== behindind[1]) {
             // in y-direction
-            console.log('j',j);
             // determine tick length (unprojected)
 
             p1 = this.project([this.xTick[i],this._yLim[j],this._zLim[k]]);
@@ -1800,7 +1796,6 @@ mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen) {
 
         }
         else {
-            console.log('k',k);
             // in z-direction
 
             p1 = this.project([this.xTick[i],this._yLim[j],this._zLim[k]]);
@@ -2155,7 +2150,6 @@ mp.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
             opt['pointer-events'] = 'visible';
             opt.onclick = (function (l) {
                 return function (ev) {
-                    console.log('toggle annotation');                    
                     that.toggleAnnotation(ev,ev.target,x[l],y[l],z[l]);
                     //ev.stopPropagation();
                 };
@@ -2327,7 +2321,7 @@ mp.Figure = function Figure(id,width,height) {
     this.dragMode = 'zooming';
 
     this.canvas.svg.addEventListener('mousedown',function(ev) {
-        console.log('mousedown ',ev);
+        //console.log('mousedown ',ev);
 
         // dismiss context menu if shown
         if (that.contextmenu.style.display === 'block') {
@@ -2359,7 +2353,6 @@ mp.Figure = function Figure(id,width,height) {
             p2 = getcoordp(that.md2);
 
             if (that.dragMode === 'zooming') {
-                console.log('zoom ',p1,p2);
                 ax = that._axes[0];
                 ax.xLim([Math.min(p1[0],p2[0]),Math.max(p1[0],p2[0])]);
                 ax.yLim([Math.min(p1[1],p2[1]),Math.max(p1[1],p2[1])]);
@@ -2369,7 +2362,6 @@ mp.Figure = function Figure(id,width,height) {
 
         that.md = null;
         that.md2 = null;
-        console.log('mouseup ',ev);
     },false); // tigger event in bubbling phase (so that it might be cancled 
 
     this.canvas.svg.addEventListener('mousemove',function(ev) {
@@ -2390,21 +2382,21 @@ mp.Figure = function Figure(id,width,height) {
                     that.dragRect = null;
                 }
 
-                console.log('mousemove ',getcoord(ev),getcoord(that.md));
+                //console.log('mousemove ',getcoord(ev),getcoord(that.md));
                 x = Math.min(p1[0],p2[0]);
                 w = Math.abs(p2[0]-p1[0]);
                 
                 y = Math.min(p1[1],p2[1]);
                 h = Math.abs(p2[1]-p1[1]);
 
-                console.log('mousemove ',x,y,w,h);
+                //console.log('mousemove ',x,y,w,h);
                 that.dragRect = that.canvas.rect(x,y,w,h);
             }
             else {
                 po = getcoordp(that.md); // origin
                 p1 = getcoordp(ev);
 
-                console.log('panning ',p1,po);
+                //console.log('panning ',p1,po);
                 ax = that._axes[0];
                 lim = ax.xLim();
                 var xs = (p1[0]-that.po[0]);
@@ -2425,7 +2417,7 @@ mp.Figure = function Figure(id,width,height) {
         that.contextmenu.style.left = i + 'px';
         that.contextmenu.style.top = j + 'px';
 
-        console.log('context ',ev);
+        //console.log('context ',ev);
         ev.preventDefault();
     });
 
@@ -2481,7 +2473,7 @@ mp.Figure.prototype.zoom = function(delta,pageX,pageY) {
                          
     var v = ax.unproject([i,j]);
     var test = ax.project(v);
-    console.log('unproject ',i,j,v,test);
+    //console.log('unproject ',i,j,v,test);
                          
 
     var alpha = (1 + Math.abs(delta)/20);
@@ -2498,7 +2490,7 @@ mp.Figure.prototype.zoom = function(delta,pageX,pageY) {
             xc = ((lim[0]+lim[1])/2 - (1-alpha) * c)/alpha;
         }
         
-        console.log('xr ',xr,[xc - xr/2,xc + xr/2]);
+        //console.log('xr ',xr,[xc - xr/2,xc + xr/2]);
         return [xc - xr/2,xc + xr/2];
     }
 
