@@ -13,3 +13,5 @@
    <link href="matplot.css" rel="stylesheet" type="text/css" />
    <script type="text/javascript" src="matplot-x.y.z.js"></script>
 }}}
+
+ * Look at the source code of the demos to see how to use matplot.
