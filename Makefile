@@ -30,4 +30,7 @@ clean:
 tar: $(TARGET_MIN) $(TARGET)
 	tar --exclude-vcs  --exclude=admin -cvzf ../matplot-$(VERSION).tar.gz .
 
-release: tar demo upload_doc
+upload: tar
+	./admin/googlecode_upload.py -s "version $(VERSION) of matplot" -p matplot -u barth.alexander -l "JavaScript,HTML,Visualization" ../matplot-$(VERSION).tar.gz
+
+release: demo tar
