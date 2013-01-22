@@ -3,7 +3,7 @@ YUICOMPRESSOR=/home/abarth/Downloads/yuicompressor-2.4.2/build/yuicompressor-2.4
 SOURCE=demos/matplot.js
 
 LICENCE_HEADER=admin/license_header
-VERSION=0.1.1
+VERSION=0.1.0
 TARGET=matplot-$(VERSION).js
 TARGET_MIN=matplot-$(VERSION)-min.js
 
@@ -27,7 +27,7 @@ demo:
 clean:
 	rm -f $(TARGET_MIN) $(TARGET)
 
-tar: $(TARGET_MIN) $(TARGET) doc
-	tar --exclude-vcs -cvzf ../EarthGL-$(VERSION).tar.gz .
+tar: $(TARGET_MIN) $(TARGET)
+	tar --exclude-vcs  --exclude=admin -cvzf ../matplot-$(VERSION).tar.gz .
 
 release: tar demo upload_doc
