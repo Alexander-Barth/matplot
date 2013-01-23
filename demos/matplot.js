@@ -2342,29 +2342,26 @@ mp.Figure = function Figure(id,width,height) {
 
     window.addWheelListener(this.canvas.svg, 
                             function(ev) { 
-                                that.zoom(ev.deltaY,ev.pageX,ev.pageY);
-                                ev.preventDefault(); 
+                                if (!that.zoom(ev.deltaY,ev.pageX,ev.pageY)) {
+                                    ev.preventDefault(); 
+                                }
                             }                    
                            );
 
     function getcoord(ev) {
-        var i,j, ax;
+        var i,j, ax, v;
         i = ev.pageX - that.container.offsetLeft;
         j = ev.pageY - that.container.offsetTop;
-        
-        ax = that._axes[0];
-        var v = ax.unproject([i,j]);
-        //return [v[0],v[1]];
         return [i,j];
     }
 
     function getcoordp(ev) {
-        var i,j, ax;
+        var i,j, ax, v;
         i = ev.pageX - that.container.offsetLeft;
         j = ev.pageY - that.container.offsetTop;
         
         ax = that._axes[0];
-        var v = ax.unproject([i,j]);
+        v = ax.unproject([i,j]);
         return [v[0],v[1]];
     }
 
@@ -2535,8 +2532,9 @@ mp.Figure.prototype.zoom = function(delta,pageX,pageY) {
         (ax.y <= rj && rj <= ax.y + ax.h)) {
 
         ax.zoom(delta,pageX,pageY);
-
+        return false;
     }
+    return true;
 };
 
 mp.Figure.prototype.draw = function() {
