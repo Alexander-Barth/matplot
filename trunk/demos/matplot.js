@@ -126,6 +126,9 @@ var matplot = (function() {
 
 var mp = {};
 
+mp.DEFAULT_FONT = '"Liberation Sans"';
+mp.DEFAULT_FONT = 'Arial';
+
 mp.colormaps = {'jet':
             [
    [0.000000000000000,0.000000000000000,0.500000000000000],
@@ -383,11 +386,13 @@ mp.SVGCanvas = function SVGCanvas(container,width,height) {
 
     this.container = container;
     this.container.appendChild(
-        this.svg = this.mk('svg',{width: width, 
-                                  height: height,
-                                  style: {'user-select': 'none',
-                                          '-webkit-user-select': 'none'}
-                                 },
+        this.svg = this.mk('svg',{
+            version: '1.1',
+            baseProfile: 'basic',
+            //xmlns: this.xmlns,
+            width: width, 
+            height: height
+        },
                            [this.axis = this.mk('g',{})]));
 
     this.parentStack = [this.axis];
@@ -412,8 +417,7 @@ mp.SVGCanvas.prototype.parent = function () {
 };
 
 mp.SVGCanvas.prototype.mk = function mk(tag,attribs,children) {
-    var xmlns = "http://www.w3.org/2000/svg";
-    return mp.mk(xmlns,tag,attribs,children);
+    return mp.mk(this.xmlns,tag,attribs,children);
 };
 
 mp.SVGCanvas.prototype.append = function(elem) {
@@ -521,13 +525,14 @@ mp.SVGCanvas.prototype.textBBox = function(string,style) {
 
     style = style || {};
     FontSize = style.FontSize || 18;
-    FontFamily = style.FontFamily || 'sans-serif';
+    FontFamily = style.FontFamily || mp.DEFAULT_FONT;
 
     // text should not be visible
     text = this.mk('text',{'x': -10000,
                            'y': 0,
-                           'font-family': FontFamily,
-                           'font-size': FontSize},[string]);
+                           'style': {'font-family': FontFamily,
+                                     'font-size': FontSize}}
+                   ,[string]);
 
     this.parent().appendChild(text);
     bbox = text.getBBox();
@@ -544,7 +549,7 @@ mp.SVGCanvas.prototype.text = function(x,y,string,style) {
     offseti = style.offseti || 0;
     offsetj = style.offsetj || 0;
     FontSize = style.FontSize || 18;
-    FontFamily = style.FontFamily || 'sans-serif';
+    FontFamily = style.FontFamily || mp.DEFAULT_FONT;
     color = style.color || 'black';
     HorizontalAlignment = style.HorizontalAlignment || 'left';
     VerticalAlignment = style.VerticalAlignment || 'baseline';
@@ -577,14 +582,15 @@ mp.SVGCanvas.prototype.text = function(x,y,string,style) {
     }
 
     this.parent().appendChild(
-        text = this.mk('text',{'x': x+offseti,
-                   'y': y+offsetj,
-                   'font-family': FontFamily,
-                   'font-size': FontSize,
-                   'text-anchor': TextAnchor,
-                   'dy': dy,
-                   'fill': color},
-           [string] ));
+        text = this.mk('text',
+                       {'x': x+offseti,
+                        'y': y+offsetj,
+                        'style': {'font-family': FontFamily,
+                                  'font-size': FontSize},
+                        'text-anchor': TextAnchor,
+                        'dy': dy,
+                        'fill': color},
+                       [string] ));
     return text;
 };
 
@@ -627,6 +633,22 @@ mp.SVGCanvas.prototype.line = function(x,y,style) {
 
 
     return polyline;
+};
+
+mp.SVGCanvas.prototype.serialize = function() {
+    var s, xml;
+
+    s = new XMLSerializer();
+    xml = s.serializeToString(this.svg);
+
+    // Hack to work around this bug which is namespace issue
+    // http://code.google.com/p/chromium/issues/detail?id=88295
+    // Chrome 24
+    if (xml.match(' xmlns="') === null) {
+        xml = xml.replace('<svg ', '<svg xmlns="' + this.xmlns + '" ');
+    }
+
+    return xml;
 };
 
 mp.isArray = function(arr) {
@@ -1144,9 +1166,43 @@ Compute U' = S x L.
     return M;
 };
 
-mp.Axis.prototype.zoomIn = function() {
-    var xl = this.xLim();    
+mp.Axis.prototype.zoom = function(delta,pageX,pageY) {
+    var i,j, ax;
+
+    i = pageX - this.fig.container.offsetLeft;
+    j = pageY - this.fig.container.offsetTop;
+
+    ax = this;
+                                                  
+    var v = ax.unproject([i,j]);
+    var test = ax.project(v);
+    //console.log('unproject ',i,j,v,test);
+                         
+
+    var alpha = (1 + Math.abs(delta)/20);
+
+    function newrange(lim,c) {
+        var xr, xc;
+        
+        if (delta > 0) {
+            xr = alpha * (lim[1]-lim[0]);
+            xc = alpha * (lim[0]+lim[1])/2 + (1-alpha) * c;
+        }
+        else {
+            xr =  (lim[1]-lim[0]) / alpha;
+            xc = ((lim[0]+lim[1])/2 - (1-alpha) * c)/alpha;
+        }
+        
+        //console.log('xr ',xr,[xc - xr/2,xc + xr/2]);
+        return [xc - xr/2,xc + xr/2];
+    }
+
+    ax.xLim(newrange(ax.xLim(),v[0]));
+    ax.yLim(newrange(ax.yLim(),v[1]));
+    this.fig.draw();
 };
+
+
 
 mp.Axis.prototype.project = function(u,options) {
     var i,j, b, v, viewport, projectionModelView;
@@ -2235,19 +2291,11 @@ mp.Figure = function Figure(id,width,height) {
     this.outerDIV =
         mp.html('div',
                      {style: {
-                         position: 'relative'}
-                     }
-/*,
-                     [
-                         this.innerDIV =
-                             mp.html('div',
-                                          {style: {
-                                              position: 'absolute'}
-                                          },
-                                          [])
-                     ]
-*/
-);
+                         'position': 'relative',
+                         'user-select': 'none',
+                         '-webkit-user-select': 'none'
+                     }}
+               );
 
     this.outerDIV.appendChild(
         this.contextmenu = mp.html('div',{
@@ -2258,27 +2306,27 @@ mp.Figure = function Figure(id,width,height) {
                 'left': '0px',
                 'top': '0px'}
         },
-                                        [
-                                            mp.html('ul',{},[
-                                                mp.html('li',{},[
+                                   [
+                                       mp.html('ul',{},[
+                                           mp.html('li',{},[
+                                               mp.html('a',{'href': '#', 
+                                                            'onclick': function(ev) { return that.save(this); },
+                                                            'download': 'figure.svg'},
+                                                       ['Download'])]),
+                                           mp.html('li',{},[
+                                               mp.html('a',{'href': '#', 
+                                                            'onclick': function(ev) { return that.zoom(-6,ev.pageX,ev.pageY); }}, 
+                                                       ['Zoom in'])]),
+                                           mp.html('li',{},[
                                                     mp.html('a',{'href': '#', 
-                                                                      'onclick': function(ev) { return that.save(this); },
-                                                                      'download': 'figure.svg'},
-                                                                 ['Download'])]),
-                                                mp.html('li',{},[
-                                                    mp.html('a',{'href': '#', 
-                                                                      'onclick': function(ev) { return that.zoom(-6,ev.pageX,ev.pageY); }}, 
-                                                                 ['Zoom in'])]),
-                                                mp.html('li',{},[
-                                                    mp.html('a',{'href': '#', 
-                                                                      'onclick': function(ev) { return that.zoom(6,ev.pageX,ev.pageY); }}, 
-                                                                 ['Zoom out'])]),
-                                                mp.html('li',{},[
-                                                    mp.html('a',{'href': '#', 
-                                                                      'onclick': function(ev) { return that.resetZoom(); }}, 
-                                                                 ['Reset zoom'])])
-                                            ])
-                                        ]));
+                                                                 'onclick': function(ev) { return that.zoom(6,ev.pageX,ev.pageY); }}, 
+                                                            ['Zoom out'])]),
+                                           mp.html('li',{},[
+                                               mp.html('a',{'href': '#', 
+                                                            'onclick': function(ev) { return that.resetZoom(); }}, 
+                                                       ['Reset zoom'])])
+                                       ])
+                                   ]));
 
     this.container.appendChild(this.outerDIV);
 
@@ -2443,11 +2491,17 @@ mp.Figure.prototype.clear = function() {
 };
 
 mp.Figure.prototype.save = function(elem) {
-    var s, xml, blob;
+    var xml, blob, mimetype = 'image/svg+xml';
+    
+    xml = this.canvas.serialize();
+    
+    if (!('download' in document.createElement('a'))) {
+        // if download attribute is not supported force download by using different mime-type
+        // This is the case for Firefox 18
+        mimetype = 'application/octet-stream';
+    }
 
-    s = new XMLSerializer();
-    xml = s.serializeToString(this.canvas.svg);
-    blob = new Blob(['<?xml version="1.0" encoding="UTF-8" standalone="no"?>' + xml],{'type': 'image/svg+xml'});
+    blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>',xml],{'type': mimetype});
     elem.href = URL.createObjectURL(blob);
     this.closeContextmenu();
 };
@@ -2463,40 +2517,9 @@ mp.Figure.prototype.resetZoom = function() {
 };
 
 mp.Figure.prototype.zoom = function(delta,pageX,pageY) {
-    var i,j, ax;
-
-    i = pageX - this.container.offsetLeft;
-    j = pageY - this.container.offsetTop;
-
     ax = this._axes[0];
-                         
-                         
-    var v = ax.unproject([i,j]);
-    var test = ax.project(v);
-    //console.log('unproject ',i,j,v,test);
-                         
-
-    var alpha = (1 + Math.abs(delta)/20);
-
-    function newrange(lim,c) {
-        var xr, xc;
-        
-        if (delta > 0) {
-            xr = alpha * (lim[1]-lim[0]);
-            xc = alpha * (lim[0]+lim[1])/2 + (1-alpha) * c;
-        }
-        else {
-            xr =  (lim[1]-lim[0]) / alpha;
-            xc = ((lim[0]+lim[1])/2 - (1-alpha) * c)/alpha;
-        }
-        
-        //console.log('xr ',xr,[xc - xr/2,xc + xr/2]);
-        return [xc - xr/2,xc + xr/2];
-    }
-
-    ax.xLim(newrange(ax.xLim(),v[0]));
-    ax.yLim(newrange(ax.yLim(),v[1]));
-    this.draw();
+    ax.zoom(delta,pageX,pageY);
+    return;
 };
 
 mp.Figure.prototype.draw = function() {
