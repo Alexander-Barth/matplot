@@ -434,17 +434,21 @@ mp.SVGCanvas.prototype.clear = function() {
     }
 };
 
-mp.SVGCanvas.prototype.clipRect = function(x,y,w,h) {
-    var id = this.id();
+mp.SVGCanvas.prototype.clipRect = function(x,y,w,h,style) {
+    var id = this.id(), g;
 
     this.parent().appendChild(
         this.mk('defs',{},[
             this.mk('clipPath',{id: id},[
-                this.mk('rect',{x: x, y:y, width: w, height: h},[])
+                this.mk('rect',{x: x, y:y, 
+                                width: w, height: h,
+                                style: style
+                               },[])
             ])
         ]));
     
-    this.push(this.group({'clip-path': 'url(#' + id + ')'}));
+    this.push(g = this.group({'clip-path': 'url(#' + id + ')'}));
+    return g;
 };
 
 mp.SVGCanvas.prototype.group = function(style) {
@@ -1167,19 +1171,13 @@ Compute U' = S x L.
 };
 
 mp.Axis.prototype.zoom = function(delta,pageX,pageY) {
-    var i,j, ax;
+    var i,j, v, alpha;
 
     i = pageX - this.fig.container.offsetLeft;
     j = pageY - this.fig.container.offsetTop;
 
-    ax = this;
-                                                  
-    var v = ax.unproject([i,j]);
-    var test = ax.project(v);
-    //console.log('unproject ',i,j,v,test);
-                         
-
-    var alpha = (1 + Math.abs(delta)/20);
+    v = this.unproject([i,j]);
+    alpha = (1 + Math.abs(delta)/20);
 
     function newrange(lim,c) {
         var xr, xc;
@@ -1197,11 +1195,17 @@ mp.Axis.prototype.zoom = function(delta,pageX,pageY) {
         return [xc - xr/2,xc + xr/2];
     }
 
-    ax.xLim(newrange(ax.xLim(),v[0]));
-    ax.yLim(newrange(ax.yLim(),v[1]));
+    this.xLim(newrange(this.xLim(),v[0]));
+    this.yLim(newrange(this.yLim(),v[1]));
     this.fig.draw();
 };
 
+mp.Axis.prototype.resetZoom = function() {
+    this.xLimMode('auto');
+    this.yLimMode('auto');
+    this.fig.draw();            
+    this.fig.closeContextmenu();
+};
 
 
 mp.Axis.prototype.project = function(u,options) {
@@ -1379,7 +1383,7 @@ mp.Axis.prototype.sensibleCameraUpVector = function() {
 };
 
 mp.Axis.prototype.draw = function() {
-    var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, frontz=-Infinity, frontind, scale;
+    var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, frontz=-Infinity, frontind, scale, that = this;
 
     // real range of x, y and z variable (might be [0,0])
     this._xrange = this.xLim();
@@ -1645,10 +1649,11 @@ mp.Axis.prototype.draw = function() {
     }
 
     // define clip rectangle
-    this.fig.canvas.clipRect(this.fig.canvas.width*this.x,
-                             this.fig.canvas.height*this.y,
-                             this.fig.canvas.width*this.w,
-                             this.fig.canvas.height*this.h);
+    this.fig.canvas.clipRect(
+        this.fig.canvas.width*this.x,
+        this.fig.canvas.height*this.y,
+        this.fig.canvas.width*this.w,
+        this.fig.canvas.height*this.h);
 
     this.renderedElements = [];
 
@@ -1670,11 +1675,12 @@ mp.Axis.prototype.draw = function() {
     this.fig.canvas.pop();
 
 /*
-    this.fig.canvas.rect(this.fig.canvas.width*this.x,
-                         this.fig.canvas.height*this.y,
-                         this.fig.canvas.width*this.w,
-                         this.fig.canvas.height*this.h,
-                             {fill: 'none', stroke: 'blue'});
+    this.fig.canvas.rect(
+        this.fig.canvas.width*this.x,
+        this.fig.canvas.height*this.y,
+        this.fig.canvas.width*this.w,
+        this.fig.canvas.height*this.h,
+        {fill: 'none', stroke: 'blue', 'pointer-events': 'visible'});
 */
 
     if (is2D) {
@@ -2335,11 +2341,11 @@ mp.Figure = function Figure(id,width,height) {
 
 
     window.addWheelListener(this.canvas.svg, 
-                     function(ev) { 
-                         that.zoom(ev.deltaY,ev.pageX,ev.pageY);
-                         ev.preventDefault(); 
-                     }                    
-                    );
+                            function(ev) { 
+                                that.zoom(ev.deltaY,ev.pageX,ev.pageY);
+                                ev.preventDefault(); 
+                            }                    
+                           );
 
     function getcoord(ev) {
         var i,j, ax;
@@ -2517,9 +2523,20 @@ mp.Figure.prototype.resetZoom = function() {
 };
 
 mp.Figure.prototype.zoom = function(delta,pageX,pageY) {
+    var i, j, ri, rj;
+    i = pageX - this.container.offsetLeft;
+    j = pageY - this.container.offsetTop;
+    
+    ri = i / this.canvas.width;
+    rj = 1 - j / this.canvas.height;
+    
     ax = this._axes[0];
-    ax.zoom(delta,pageX,pageY);
-    return;
+    if ((ax.x <= ri && ri <= ax.x + ax.w) &&
+        (ax.y <= rj && rj <= ax.y + ax.h)) {
+
+        ax.zoom(delta,pageX,pageY);
+
+    }
 };
 
 mp.Figure.prototype.draw = function() {
