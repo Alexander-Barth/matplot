@@ -33,4 +33,7 @@ tar: $(TARGET_MIN) $(TARGET)
 upload: tar
 	./admin/googlecode_upload.py -s "version $(VERSION) of matplot" -p matplot -u 'barth.alexander@gmail.com' -l "JavaScript,HTML,Visualization" ../matplot-$(VERSION).tar.gz
 
+jslint:
+	jslint $(SOURCE)
+
 release: demo tar
