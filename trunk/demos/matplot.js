@@ -1382,8 +1382,49 @@ mp.Axis.prototype.sensibleCameraUpVector = function() {
     return [0, 0, 1];
 };
 
+mp.Axis.prototype.box = function() {
+    var i,j,k,l,v, databox, pdatabox, pmin, pmax;
+
+    pmin = [Infinity,Infinity,Infinity];
+    pmax =  [-Infinity,-Infinity,-Infinity];
+
+    databox = [];
+    pdatabox = [];
+
+    for (i = 0; i < 2; i++) {
+        databox[i] = [];
+        pdatabox[i] = [];
+
+        for (j = 0; j < 2; j++) {
+            databox[i][j] = [];
+            pdatabox[i][j] = [];
+
+            for (k = 0; k < 2; k++) {
+                databox[i][j][k] = [this._xLim[i],this._yLim[j],this._zLim[k],1];
+
+                v = this.project(databox[i][j][k],
+                                 {viewport: numeric.identity(4)});
+
+                left = Math.min(left,v[0]);
+                right = Math.max(right,v[0]);
+                
+                top = Math.max(top,v[1]);
+                bottom = Math.min(bottom,v[1]);
+
+                pdatabox[i][j][k] = v;
+
+                if (v[2] < behindz) {
+                    behindz = v[2];
+                    behindind = [i,j,k];
+                }
+            }
+        }
+    }
+
+};
+
 mp.Axis.prototype.draw = function() {
-    var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, frontz=-Infinity, frontind, scale, that = this;
+    var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, scale, that = this, elem, lr, ul;
 
     // real range of x, y and z variable (might be [0,0])
     this._xrange = this.xLim();
@@ -1549,46 +1590,11 @@ mp.Axis.prototype.draw = function() {
                     behindz = v[2];
                     behindind = [i,j,k];
                 }
-
-                if (v[2] > frontz) {
-                    frontz = v[2];
-                    frontind = [i,j,k];
-                }
             }
         }
     }
-    //console.log('behindz ',behindz,behindind,frontz,frontind);
+    //console.log('behindz ',behindz,behindind);
     this.behindind = behindind;
-/*
-    if ( (right - left) >= (top - bottom)) {
-//    if ( (right - left)/this.w >= (top - bottom)/this.h) {
-        scale = this.w/2;
-    } 
-    else {
-        scale = this.h/2;
-    }
-    
-    // find largest square that contained the data bounding box (transformed by modelView)
-    left = Math.min(left,bottom);
-    right = Math.max(right,top);
-    scale = scale/Math.max(right,-left);
-
-    this.viewport = mp.prod(
-        // transform relative coordinates in pixels
-        mp.scale([this.fig.canvas.width,this.fig.canvas.height,1]),
-        //mp.scale([this.fig.canvas.width,this.fig.canvas.width,1]),
-        // reverse j-axis (1-j)
-        mp.translate([0,1,0]),
-        mp.scale([1,-1,1]),
-        // from [-w/2,w/2] to [x,x+w/2] 
-        // (unit fraction of figure width/height)
-        mp.translate([this.x+this.w/2,this.y+this.h/2,0]),
-        // from [-1,1] to [-w/2,w/2] 
-        // (unit fraction of figure width/height)
-        //mp.scale([this.w/2,this.h/2,1])
-        mp.scale([scale,scale,1])
-    );
-*/
 
     /*
       mapping that would fill all plotting space
@@ -1649,11 +1655,10 @@ mp.Axis.prototype.draw = function() {
     }
 
     // define clip rectangle
-    this.fig.canvas.clipRect(
-        this.fig.canvas.width*this.x,
-        this.fig.canvas.height*this.y,
-        this.fig.canvas.width*this.w,
-        this.fig.canvas.height*this.h);
+    lr = numeric.dot(this.viewport,[right,bottom,0,1]);
+    ul = numeric.dot(this.viewport,[left,top,0,1]);
+
+    this.fig.canvas.clipRect(ul[0],ul[1],lr[0]-ul[0],lr[1]-ul[1]);
 
     this.renderedElements = [];
 
@@ -1667,8 +1672,14 @@ mp.Axis.prototype.draw = function() {
 
     // pass all rendered elements to canvas
     for (i = 0; i < this.renderedElements.length; i++) {
-        var elem = this.renderedElements[i];        
+        elem = this.renderedElements[i];        
         elem.fun.apply(this.fig.canvas,elem.args);
+    }
+
+    // annotation    
+    for (i = 0; i < this._annotations.length; i++) {
+        var an = this._annotations[i];
+        this.drawAnnotation(an.x,an.y,an.z,an.text,an.style);
     }
 
     // exit clip rectangle
@@ -1693,12 +1704,6 @@ mp.Axis.prototype.draw = function() {
         this.drawLegend();
     }
 
-    // annotation
-    
-    for (i = 0; i < this._annotations.length; i++) {
-        var an = this._annotations[i];
-        this.drawAnnotation(an.x,an.y,an.z,an.text,an.style);
-    }
 };
 
 
@@ -2026,9 +2031,6 @@ mp.Axis.prototype.drawLegend = function() {
             y = y+maxHeight+lineSpace;
         }
     }
-//    this.fig.canvas.text(label);
-
-
 };
 
 mp.Axis.prototype.rect = function(x,y,v) {
