@@ -25,14 +25,16 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-/*jslint browse: true, continue : true, devel : true, indent : 4, maxerr : 50, newcap : false, plusplus : false, regexp : true, vars : false, white : false, nomen: false */
+/*jslint browser: true, continue: true, devel: true, indent: 4, maxerr: 50, newcap: false, plusplus: false, regexp: true, vars: false, white: false, nomen: false */
+
+/*jshint browser: true, devel: true, indent: 4, maxerr: 50, newcap: false, plusplus: false, regexp: true, white: false, nomen: false */
 /*global numeric: false, XMLSerializer: false, Blob: false, URL: false, WheelEvent: false */
 
 // creates a global "addwheelListener" method
 // example: addWheelListener( elem, function( e ) { console.log( e.deltaY ); e.preventDefault(); } );
 // https://developer.mozilla.org/en-US/docs/Mozilla_event_reference/wheel
 
-(function(window,document) {
+(function(window, document) {
     "use strict";
  
     var prefix = "", _addEventListener, onwheel, support;
@@ -199,11 +201,12 @@ mp.colormaps = {'jet':
 
 
 mp.peaks = function() {
-    var i,j,x=[],y=[],z=[];
-    var f = function(x,y) {
-        return 3*(1-x)*(1-x)*Math.exp(-x*x - (y+1)*(y+1))
-            - 10*(x/5 - x*x*x - Math.pow(y,5))*Math.exp(-x*x-y*y)
-            - 1/3*Math.exp(-(x+1)*(x+1) - y*y); };
+    var i, j, x=[], y=[], z=[], f;
+
+    f = function(x,y) {
+        return 3*(1-x)*(1-x)*Math.exp(-x*x - (y+1)*(y+1)) -
+            10*(x/5 - x*x*x - Math.pow(y,5))*Math.exp(-x*x-y*y) -
+            1/3*Math.exp(-(x+1)*(x+1) - y*y); };
 
     for (i=0; i < 49; i++) {
         x[i] = [];
@@ -234,7 +237,7 @@ mp.range = function (start,end,step) {
 // Code taken from yapso
 
 mp.ticks = function ticks(min,max,n) {
-    var nt, range, dt, base, sdt, t0, i;
+    var nt, range, dt, base, sdt, t0, i, t, eps;
 
     // a least 2 ticks
     if (n<2) {
@@ -280,27 +283,27 @@ mp.ticks = function ticks(min,max,n) {
 
     nt = Math.round(Math.floor(max/dt) - Math.ceil(min/dt) +1);
 
-    var t = new Array(nt);
+    t = [];
 
     for(i=0;i<nt;i++) {
 	t[i] = t0 + i*dt;
 
 	// attempt to remove spurious decimals
-	var eps = dt;
+	eps = dt;
 	t[i] = Math.round(t[i]/eps)*eps;
+
 	if (Math.abs(t[i])<1e-14) {
             t[i]=0;
         }
     }
 
     return t;
-
 };
 
 mp.remove_spurious_decimals = function(s) {
     var re1,re2,s2,s3;
 
-    if (typeof(s) === "number") {
+    if (typeof s === "number") {
 	s = s.toString();
     }
 
@@ -535,8 +538,8 @@ mp.SVGCanvas.prototype.textBBox = function(string,style) {
     text = this.mk('text',{'x': -10000,
                            'y': 0,
                            'style': {'font-family': FontFamily,
-                                     'font-size': FontSize}}
-                   ,[string]);
+                                     'font-size': FontSize}},
+                   [string]);
 
     this.parent().appendChild(text);
     bbox = text.getBBox();
@@ -546,8 +549,8 @@ mp.SVGCanvas.prototype.textBBox = function(string,style) {
 };
 
 mp.SVGCanvas.prototype.text = function(x,y,string,style) {
-    var text, offseti, offsetj, FontSize, FontFamily, color, HorizontalAlignment, VerticalAlignment;
-    var TextAnchor, dy = 0;
+    var text, offseti, offsetj, FontSize, FontFamily, color, HorizontalAlignment, VerticalAlignment,
+       TextAnchor, dy = 0;
 
     style = style || {};
     offseti = style.offseti || 0;
@@ -828,13 +831,13 @@ mp.ColorMap = function ColorMap(cLim,type) {
 };
 
 mp.ColorMap.prototype.get = function (v) {
-    var c=[];
-    var vs = (v-this.cLim[0])/(this.cLim[1]-this.cLim[0]);
+    var c=[], vs, index;
+    vs = (v-this.cLim[0])/(this.cLim[1]-this.cLim[0]);
     c[0] = vs;
     c[1] = 1;
     c[2] = 1;
 
-    var index = Math.round(vs * this.cm.length);
+    index = Math.round(vs * this.cm.length);
     index = Math.max(Math.min(index,this.cm.length-1),0);
     c = this.cm[index];
 
@@ -1145,15 +1148,14 @@ Compute S = L x U.
 Normalize S.
 Compute U' = S x L.
 */
-    var nu = numeric;
 
     // L vector pointing from camera to target
-    L = nu.sub(C,E);
-    L = nu.mul(1/nu.norm2(L),L);
+    L = numeric.sub(C,E);
+    L = numeric.mul(1/numeric.norm2(L),L);
 
     // side direction to the "right" of L
     S = mp.cross(L,U);
-    S = nu.mul(1/nu.norm2(S),S);
+    S = numeric.mul(1/numeric.norm2(S),S);
 
     // new up vector
     Up = mp.cross(S,L);
@@ -1382,49 +1384,13 @@ mp.Axis.prototype.sensibleCameraUpVector = function() {
     return [0, 0, 1];
 };
 
-mp.Axis.prototype.box = function() {
-    var i,j,k,l,v, databox, pdatabox, pmin, pmax;
 
-    pmin = [Infinity,Infinity,Infinity];
-    pmax =  [-Infinity,-Infinity,-Infinity];
-
-    databox = [];
-    pdatabox = [];
-
-    for (i = 0; i < 2; i++) {
-        databox[i] = [];
-        pdatabox[i] = [];
-
-        for (j = 0; j < 2; j++) {
-            databox[i][j] = [];
-            pdatabox[i][j] = [];
-
-            for (k = 0; k < 2; k++) {
-                databox[i][j][k] = [this._xLim[i],this._yLim[j],this._zLim[k],1];
-
-                v = this.project(databox[i][j][k],
-                                 {viewport: numeric.identity(4)});
-
-                left = Math.min(left,v[0]);
-                right = Math.max(right,v[0]);
-                
-                top = Math.max(top,v[1]);
-                bottom = Math.min(bottom,v[1]);
-
-                pdatabox[i][j][k] = v;
-
-                if (v[2] < behindz) {
-                    behindz = v[2];
-                    behindind = [i,j,k];
-                }
-            }
-        }
-    }
-
-};
-
-mp.Axis.prototype.draw = function() {
-    var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, scale, that = this, elem, lr, ul;
+mp.Axis.prototype.setupProjection = function() {
+    var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, scale, that = this, elem, lr, ul,
+       v, right = -Infinity, left = Infinity,
+       top = -Infinity, bottom = Infinity,
+       near = Infinity, far = -Infinity,
+       zNear = -10, zFar = 200;
 
     // real range of x, y and z variable (might be [0,0])
     this._xrange = this.xLim();
@@ -1440,7 +1406,7 @@ mp.Axis.prototype.draw = function() {
 
     this.cmap.cLim = mp.prettyRange(this._crange);
 
-    is2D = this.is2dim();
+    this.is2D = this.is2dim();
 
     if (this.xTickMode === 'auto') {
         this.xTick = mp.ticks(this._xLim[0],this._xLim[1],5);
@@ -1467,11 +1433,11 @@ mp.Axis.prototype.draw = function() {
     }
 
 
-    if (!is2D) {
+    if (!this.is2D) {
         this._projection = 'perspective';
     }
 
-    //console.log('is2D',is2D,this._zLim);
+    //console.log('this.is2D',this.is2D,this._zLim);
     // camera
     this._CameraTarget = [(this._xLim[0]+this._xLim[1])/2,
                           (this._yLim[0]+this._yLim[1])/2,
@@ -1532,10 +1498,6 @@ mp.Axis.prototype.draw = function() {
         numeric.inv(mp.scale(this._DataAspectRatio)));
     //console.log('modelView ',numeric.prettyPrint(this.modelView));
 
-
-    var v, right = -Infinity, left = Infinity,
-    top = -Infinity, bottom = Infinity,
-    near = Infinity, far = -Infinity;
         
     if (this._projection === 'orthographic') {
         //this.projection = mp.ortho(left, right, bottom, top, near, far);
@@ -1544,10 +1506,7 @@ mp.Axis.prototype.draw = function() {
         this.projection = numeric.identity(4);
     }
     else {
-        var aspect = 1;
-        var zNear = -10;
-        var zFar = 200;
-        this.projection = mp.perspective(this._CameraViewAngle * Math.PI/180, aspect, zNear, zFar);
+        this.projection = mp.perspective(this._CameraViewAngle * Math.PI/180, 1, zNear, zFar);
         //console.log('projection ',numeric.prettyPrint(this.projection));
         //console.log('Target ',this._CameraTarget);
         //console.log('MV * Target',  numeric.dot(this.modelView,[this._CameraTarget[0],this._CameraTarget[1],this._CameraTarget[2],1]));
@@ -1647,18 +1606,26 @@ mp.Axis.prototype.draw = function() {
     this.invViewport = numeric.inv(this.viewport);
     this.invProjectionModelView = numeric.inv(this.projectionModelView);
 
+    // define clip rectangle
+    this.lr = numeric.dot(this.viewport,[right,bottom,0,1]);
+    this.ul = numeric.dot(this.viewport,[left,top,0,1]);
 
-    if (!is2D) {
+
+};
+
+mp.Axis.prototype.draw = function() {
+    var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, scale, that = this, elem, lr, ul, an;
+
+    this.setupProjection();
+
+    if (!this.is2D) {
         this.drawAxis(0,this.xTickLabel,this.xTickLen);
         this.drawAxis(1,this.yTickLabel,this.yTickLen);
         this.drawAxis(2,this.zTickLabel,this.zTickLen);
     }
 
-    // define clip rectangle
-    lr = numeric.dot(this.viewport,[right,bottom,0,1]);
-    ul = numeric.dot(this.viewport,[left,top,0,1]);
-
-    this.fig.canvas.clipRect(ul[0],ul[1],lr[0]-ul[0],lr[1]-ul[1]);
+    // set clip rectangle
+    this.fig.canvas.clipRect(this.ul[0],this.ul[1],this.lr[0]-this.ul[0],this.lr[1]-this.ul[1]);
 
     this.renderedElements = [];
 
@@ -1678,7 +1645,7 @@ mp.Axis.prototype.draw = function() {
 
     // annotation    
     for (i = 0; i < this._annotations.length; i++) {
-        var an = this._annotations[i];
+        an = this._annotations[i];
         this.drawAnnotation(an.x,an.y,an.z,an.text,an.style);
     }
 
@@ -1694,7 +1661,7 @@ mp.Axis.prototype.draw = function() {
         {fill: 'none', stroke: 'blue', 'pointer-events': 'visible'});
 */
 
-    if (is2D) {
+    if (this.is2D) {
         this.drawXTicks();
         this.drawYTicks();
     }
@@ -1708,10 +1675,9 @@ mp.Axis.prototype.draw = function() {
 
 
 mp.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen) {
-    var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v=1, ref;
-    var behindind = this.behindind, save_project;
-
-    var bbox = [this._xLim,this._yLim,this._zLim];
+    var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v=1, ref, 
+      behindind = this.behindind, save_project,
+      bbox = [this._xLim,this._yLim,this._zLim];
 
     function mod(x,n) {
         return ((x%n)+n)%n;
@@ -1773,8 +1739,8 @@ mp.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen) {
 
 
 mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen) {
-    var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v, dx, dy, dz;
-    var behindind = this.behindind;
+    var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v, dx, dy, dz,
+      behindind = this.behindind;
 
     // draw grid lines
     k = behindind[2];
@@ -1982,7 +1948,10 @@ mp.Axis.prototype.legend = function(state) {
 };
 
 mp.Axis.prototype.drawLegend = function() {
-    var style, label, maxWidth = -Infinity, maxHeight=-Infinity, maxMarkerSize=0, bbox, x, y, n=0, i, w, h;
+    var style, label, maxWidth = -Infinity, maxHeight=-Infinity, maxMarkerSize=0, bbox, x, y, n=0, i, w, h,
+      margin = 10, padding = 7, lineSpace = 1, iconWidth = 25, iconSep = 5,
+      legendWidth, legendHeight;
+
 
     for (i = 0; i<this.children.length; i++) {
         style = this.children[i].style;
@@ -2002,10 +1971,9 @@ mp.Axis.prototype.drawLegend = function() {
 
     }
 
-    var margin = 10, padding = 7, lineSpace = 1, iconWidth = 25, iconSep = 5;
-
     // position top right
-    var legendWidth = maxWidth + 2*padding + iconWidth + iconSep + 2*maxMarkerSize, legendHeight = n*(maxHeight+lineSpace) + 2*padding;
+    legendWidth = maxWidth + 2*padding + iconWidth + iconSep + 2*maxMarkerSize;
+    legendHeight = n*(maxHeight+lineSpace) + 2*padding;
 
     x = this.fig.canvas.width*(this.x+this.w) - margin - legendWidth;
     y = this.fig.canvas.height*(1-this.y-this.h) + margin;
@@ -2034,9 +2002,10 @@ mp.Axis.prototype.drawLegend = function() {
 };
 
 mp.Axis.prototype.rect = function(x,y,v) {
-    var color;
-    var ll = this.project([x[0],y[1]]);
-    var up = this.project([x[1],y[0]]);
+    var color, ll, up;
+
+    ll = this.project([x[0],y[1]]);
+    up = this.project([x[1],y[0]]);
 
     if (typeof v === 'string') {
         color = v;
@@ -2374,6 +2343,8 @@ mp.Figure = function Figure(id,width,height) {
     this.dragMode = 'zooming';
 
     this.canvas.svg.addEventListener('mousedown',function(ev) {
+        var ax;
+
         //console.log('mousedown ',ev);
 
         // dismiss context menu if shown
@@ -2387,7 +2358,7 @@ mp.Figure = function Figure(id,width,height) {
         if (ev.button === 0) {
             that.md = ev;
             that.po = getcoordp(that.md); // origin
-            var ax = that._axes[0];
+            ax = that._axes[0];
             that.orig_xlim = ax.xLim();
         }
     });
@@ -2418,7 +2389,7 @@ mp.Figure = function Figure(id,width,height) {
     },false); // tigger event in bubbling phase (so that it might be cancled 
 
     this.canvas.svg.addEventListener('mousemove',function(ev) {
-        var p1, p2, x, y, h, w, ax, lim, r, po;
+        var p1, p2, x, y, h, w, ax, lim, r, po, xs;
 
         //console.log('mousemove ',ev);
 
@@ -2452,7 +2423,7 @@ mp.Figure = function Figure(id,width,height) {
                 //console.log('panning ',p1,po);
                 ax = that._axes[0];
                 lim = ax.xLim();
-                var xs = (p1[0]-that.po[0]);
+                xs = (p1[0]-that.po[0]);
                 r = [that.orig_xlim[0]-xs,that.orig_xlim[1]-xs];
                 ax.xLim(r);
                 that.draw();    
@@ -2481,12 +2452,14 @@ mp.Figure.prototype.closeContextmenu = function() {
 };
 
 mp.Figure.prototype.axes = function(x,y,w,h) {
+    var ax;
+
     x = (x !== undefined ? x : 0.1);
     y = (y !== undefined ? y : 0.1);
     w = (w !== undefined ? w : 0.8);
     h = (h !== undefined ? h : 0.8);
 
-    var ax = new mp.Axis(this,x,y,w,h);
+    ax = new mp.Axis(this,x,y,w,h);
     this._axes.push(ax);
     return ax;
 };
@@ -2500,7 +2473,7 @@ mp.Figure.prototype.save = function(elem) {
     
     xml = this.canvas.serialize();
     
-    if (!('download' in document.createElement('a'))) {
+    if (!document.createElement('a').hasOwnProperty('download')) {
         // if download attribute is not supported force download by using different mime-type
         // This is the case for Firefox 18
         mimetype = 'application/octet-stream';
@@ -2522,7 +2495,7 @@ mp.Figure.prototype.resetZoom = function() {
 };
 
 mp.Figure.prototype.zoom = function(delta,pageX,pageY) {
-    var i, j, ri, rj;
+    var i, j, ri, rj, ax;
     i = pageX - this.container.offsetLeft;
     j = pageY - this.container.offsetTop;
     
