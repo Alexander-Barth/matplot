@@ -2183,6 +2183,7 @@ mp.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
             opt['pointer-events'] = 'visible';
             opt.onclick = (function (l) {
                 return function (ev) {
+                    //console.log(ev);
                     that.toggleAnnotation(ev,ev.target,x[l],y[l],z[l]);
                     //ev.stopPropagation();
                 };
