@@ -26,3 +26,7 @@
   background-color: #555;
   color: white;
 }
+
+.matplot-contextmenu .matplot-about {
+ font-style: italic;
+}
