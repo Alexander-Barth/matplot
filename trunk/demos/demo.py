@@ -106,6 +106,26 @@ ax.colorbar();
 fig.draw();
 '''},
 
+
+#############################
+    {'title': 'patch',
+     'description': 'patch',
+     'name': 'patch',
+     'javascript': '''
+// make a figure of size 700 x 500 pixels
+fig = new matplot.Figure("plot",700,500);
+
+// add axis to the figure
+ax = fig.axes();
+
+// pseudo color plot
+ax.patch([0,2,1],[0,0,1],[0,0,0],{color: 'red'});
+
+// draw everything
+fig.draw();
+'''},
+
+
 #############################
 
     {'title': 'pcolor on non-rectangular grid',

@@ -802,6 +802,28 @@ mp.Surface.prototype.draw = function(axis) {
 };
 
 
+// Patch object
+
+mp.Patch = function Patch(x,y,z,style) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.c = [];
+    this.style = style || {};
+};
+
+mp.Patch.prototype.lim = function(what) {
+    var tmp = this[what];
+    return mp.dataRange(tmp);
+};
+
+mp.Patch.prototype.draw = function(axis) {
+    axis.polygon(this.x,this.y,this.z,0,this.style.color || 'black');
+};
+
+
+// Line object
+
 mp.Line = function Line(x,y,z,style) {
     this.x = x;
     this.y = y;
@@ -1014,18 +1036,18 @@ function installGetterSetterMode (prop,func) {
 
 }
 
-
+/*
 mp.Axis.prototype.xLim = getterSetterMode(function() { return this.lim('x'); },'_xLim','_xLimMode');
 mp.Axis.prototype.yLim = getterSetterMode(function() { return this.lim('y'); },'_yLim','_yLimMode');
 mp.Axis.prototype.zLim = getterSetterMode(function() { return this.lim('z'); },'_zLim','_zLimMode');
 mp.Axis.prototype.cLim = getterSetterMode(function() { return this.lim('c'); },'_cLim','_cLimMode');
-
-mp.Axis.prototype.projection = getterSetterVal('_projection',['orthographic', 'perspective']);
-
-mp.Axis.prototype.xLimMode = getterSetterVal('_xLimMode',['auto','manual']);
 mp.Axis.prototype.yLimMode = getterSetterVal('_yLimMode',['auto','manual']);
 mp.Axis.prototype.zLimMode = getterSetterVal('_zLimMode',['auto','manual']);
 mp.Axis.prototype.cLimMode = getterSetterVal('_cLimMode',['auto','manual']);
+*/
+
+mp.Axis.prototype.projection = getterSetterVal('_projection',['orthographic', 'perspective']);
+
 
 
 mp.Axis.prototype.xtick = getterSetterMode(function() { return this.xTick; },'xTick','xTickMode');
@@ -1035,6 +1057,10 @@ mp.Axis.prototype.ztick = getterSetterMode(function() { return this.zTick; },'zT
 mp.Axis.prototype.DataAspectRatio = getterSetterMode(function() { return this._DataAspectRatio; },'_DataAspectRatio','_DataAspectRatioMode');
 mp.Axis.prototype.DataAspectRatioMode = getterSetterVal('_DataAspectRatioMode',['auto','manual']);
 
+installGetterSetterMode('xLim',function() { return this.lim('x'); });
+installGetterSetterMode('yLim',function() { return this.lim('y'); });
+installGetterSetterMode('zLim',function() { return this.lim('z'); });
+installGetterSetterMode('cLim',function() { return this.lim('c'); });
 installGetterSetterMode('CameraPosition',function() { return this._CameraPosition; });
 installGetterSetterMode('CameraUpVector');
 
@@ -1367,6 +1393,20 @@ mp.Axis.prototype.pcolor = function(x,y,v) {
 
 mp.Axis.prototype.surf = function(x,y,z) {
     this.children.push(new mp.Surface(x,y,z,z));
+};
+
+mp.Axis.prototype.patch = function(x,y,z,c) {
+    var i;
+
+    if (arguments.length === 3) {
+        c = z;
+        z = [];
+        for (i=0; i<x.length; i++) {
+            z[i] = 0;
+        }
+    }
+
+    this.children.push(new mp.Patch(x,y,z,c));
 };
 
 mp.Axis.prototype.is2dim = function() {
@@ -2035,8 +2075,8 @@ mp.Axis.prototype.text = function(x,y,z,string,style) {
 
 };
 
-mp.Axis.prototype.polygon = function(x,y,z,v) {
-    var pos, i = [], j = [], zindex = [], l, color, onclick, that = this;
+mp.Axis.prototype.polygon = function(x,y,z,v,color) {
+    var pos, i = [], j = [], zindex = [], l, onclick, that = this;
 
     for (l = 0; l < x.length; l++) {
         pos = this.project([x[l],y[l],z[l]]);
@@ -2044,7 +2084,7 @@ mp.Axis.prototype.polygon = function(x,y,z,v) {
         j.push(pos[1]);
         zindex.push(pos[2]);
     }
-    color = this.cmap.get(v);
+    color = color || this.cmap.get(v);
 
     onclick = (function (l) {
         return function (event) {
@@ -2296,13 +2336,17 @@ mp.Figure = function Figure(id,width,height) {
                                                             'onclick': function(ev) { return that.zoom(-6,ev.pageX,ev.pageY); }}, 
                                                        ['Zoom in'])]),
                                            mp.html('li',{},[
-                                                    mp.html('a',{'href': '#', 
+                                               mp.html('a',{'href': '#', 
                                                                  'onclick': function(ev) { return that.zoom(6,ev.pageX,ev.pageY); }}, 
-                                                            ['Zoom out'])]),
+                                                       ['Zoom out'])]),
                                            mp.html('li',{},[
                                                mp.html('a',{'href': '#', 
                                                             'onclick': function(ev) { return that.resetZoom(); }}, 
-                                                       ['Reset zoom'])])
+                                                       ['Reset zoom'])]),
+                                           mp.html('li',{'class' : 'matplot-about'},[
+                                               mp.html('a',{'href': 'http://matplot.googlecode.com', 
+                                                            'target': '_blank'},
+                                                       ['Abourt matplot'])])
                                        ])
                                    ]));
 
