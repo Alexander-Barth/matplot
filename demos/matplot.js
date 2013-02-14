@@ -881,7 +881,7 @@ mp.Axis = function Axis(fig,x,y,w,h) {
     this.FontFamily = "Verdana";
     this.FontSize = 15;
     this.color = 'black';
-    this.children = [];
+    this.children = [];    
 
     this._projection = 'orthographic';
 
@@ -968,6 +968,13 @@ mp.Axis = function Axis(fig,x,y,w,h) {
     };
     this.annotatedElements = [];
     this._annotations = [];
+
+    // transformation function (direct and inverse)
+
+    this._transform = [
+        function(x) { return x; },
+        function(x) { return x; }
+    ];
 
     // all rendered elements
     this.renderedElements = [];
@@ -1244,6 +1251,7 @@ mp.Axis.prototype.project = function(u,options) {
     
     // copy array so that we do not modify u
     v = u.slice(0); 
+    v = this._transform[0](v);
 
     if (v.length === 2) {
         v[2] = 0;
@@ -1282,6 +1290,7 @@ mp.Axis.prototype.unproject = function(u) {
     // inverse of ModelView matrix and then Projection matrix
     v = numeric.dot(this.invProjectionModelView,v);
 
+    v = this._transform[1](v);
     return v;
 };
 

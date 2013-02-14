@@ -118,8 +118,8 @@ fig = new matplot.Figure("plot",700,500);
 // add axis to the figure
 ax = fig.axes();
 
-// pseudo color plot
-ax.patch([0,2,1],[0,0,1],[0,0,0],{color: 'red'});
+// blue triangle
+ax.patch([0,2,1],[0,0,1],{color: 'blue'});
 
 // draw everything
 fig.draw();
