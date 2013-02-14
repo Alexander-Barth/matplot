@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <meta name="author" content="Alexander Barth">
+
+   <title>matplot: countries</title>
+   <link href="style.css" rel="stylesheet" type="text/css" />
+   <link href="prettify/prettify.css" type="text/css" rel="stylesheet" />
+   <script type="text/javascript" src="prettify/prettify.js"></script>
+   <script type="text/javascript" src="numeric-1.2.3.js"></script>
+   <link href="../matplot.css" rel="stylesheet" type="text/css" />
+   <script type="text/javascript" src="matplot.js"></script>
+<script type="text/javascript" src="countries.js"></script>
+
+   <script type="text/javascript">
+function init() {      
+  
+// the global variable 'countries' is loaded from the file countries.js
+var i,j, coord;  
+
+
+// make a figure of size 700 x 500 pixels
+fig = new matplot.Figure("plot",700,500);
+
+// add axis to the figure
+ax = fig.axes();
+
+ax.transform([
+   function(x) { 
+     return [x[0]*Math.PI/180,
+            Math.log(Math.tan(Math.PI/4 + x[1]/2 * Math.PI/180)),
+            x[2],x[3]]; 
+   },
+   function(x) { 
+     return [x[0]*180/Math.PI,
+            360*Math.atan(Math.exp(x[1]))/Math.PI - 90,
+            x[2],x[3]]; 
+   }]);
+
+// set range of longitude and latitude
+ax.xLim([-180,180]);
+ax.yLim([-80,80]);
+
+// fix aspect ratio
+ax.DataAspectRatio([1,1,1]);
+
+// loop over all countries and polygones
+for (i=0; i < countries.length; i++) {
+  for (j=0; j < countries[i].coordinates.length; j++) {
+    // countries[i].coordinates[j] is a list of [longitude,latitude]
+    coord = numeric.transpose(countries[i].coordinates[j]);
+    ax.patch(coord[0],coord[1],{color: 'blue'});
+  }
+}
+
+// draw everything
+fig.draw();
+
+}
+
+addEventListener('load', function (event) { prettyPrint() }, false);
+
+    </script>
+ </head>
+    <body onload="init()">
+    <h1>matplot: countries</h1>
+    <p>patch showing countries</p>
+    <div id="plot"></div>
+    <h2>Code:</h2>
+    <pre class=prettyprint>
+
+// the global variable 'countries' is loaded from the file countries.js
+var i,j, coord;  
+
+
+// make a figure of size 700 x 500 pixels
+fig = new matplot.Figure("plot",700,500);
+
+// add axis to the figure
+ax = fig.axes();
+
+// loop over all countries and polygones
+for (i=0; i < countries.length; i++) {
+  for (j=0; j < countries[i].coordinates.length; j++) {
+    // countries[i].coordinates[j] is a list of [longitude,latitude]
+    coord = numeric.transpose(countries[i].coordinates[j]);
+    ax.patch(coord[0],coord[1],{color: 'blue'});
+  }
+}
+
+// draw everything
+fig.draw();
+
+    </pre>    
+  </body>
+</html>
