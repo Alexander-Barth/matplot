@@ -20,6 +20,7 @@ templateDef='''
    <script type="text/javascript" src="numeric-1.2.3.js"></script>
    <link href="../matplot.css" rel="stylesheet" type="text/css" />
    <script type="text/javascript" src="matplot.js"></script>
+$head
 
    <script type="text/javascript">
 function init() {      
@@ -127,6 +128,36 @@ fig.draw();
 
 
 #############################
+    {'title': 'countries',
+     'description': 'patch showing countries',
+     'name': 'countries',
+     'head': '<script type="text/javascript" src="countries.js"></script>',
+     'javascript': '''
+// the global variable 'countries' is loaded from the file countries.js
+var i,j, coord;  
+
+
+// make a figure of size 700 x 500 pixels
+fig = new matplot.Figure("plot",700,500);
+
+// add axis to the figure
+ax = fig.axes();
+
+// loop over all countries and polygones
+for (i=0; i < countries.length; i++) {
+  for (j=0; j < countries[i].coordinates.length; j++) {
+    // countries[i].coordinates[j] is a list of [longitude,latitude]
+    coord = numeric.transpose(countries[i].coordinates[j]);
+    ax.patch(coord[0],coord[1],{color: 'blue'});
+  }
+}
+
+// draw everything
+fig.draw();
+'''},
+
+
+#############################
 
     {'title': 'pcolor on non-rectangular grid',
      'description': '2D pseudo color plot on non-rectangular grid',
@@ -195,6 +226,9 @@ fig.draw();
 
 def makeDemos(demos):
     for demo in demos:
+        if 'head' not in demo:
+            demo['head'] = ''
+
         print 'Making example:',demo['title']
         filename = 'demo_' + demo['name'] + '.html'
         f = open(filename,'w')
