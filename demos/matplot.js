@@ -200,6 +200,21 @@ mp.colormaps = {'jet':
            };
 
 
+mp.trans = {
+    'mercator': [
+        function(x) { 
+            return [x[0]*Math.PI/180,
+                    Math.log(Math.tan(Math.PI/4 + x[1]/2 * Math.PI/180)),
+                    x[2],x[3]]; 
+        },
+        function(x) { 
+            return [x[0]*180/Math.PI,
+                    360*Math.atan(Math.exp(x[1]))/Math.PI - 90,
+                    x[2],x[3]]; 
+        }
+    ]
+};
+
 mp.peaks = function() {
     var i, j, x=[], y=[], z=[], f;
 
@@ -1251,14 +1266,15 @@ mp.Axis.prototype.project = function(u,options) {
     
     // copy array so that we do not modify u
     v = u.slice(0); 
-    v = this._transform[0](v);
-
     if (v.length === 2) {
         v[2] = 0;
     }
     if (v.length === 3) {
         v[3] = 1;
     }
+
+    v = this._transform[0](v);
+
 
     // Apply first ModelView matrix and then Projection matrix
     v = numeric.dot(projectionModelView,v);
@@ -1311,6 +1327,9 @@ mp.Axis.prototype.lim = function(what) {
     return [min,max];
 };
 
+mp.Axis.prototype.transform = function(transform) {
+    this._transform = transform;
+};
 
 mp.Axis.prototype.plot = function(x,y,z,style) {
     var i, lastArg, args;
@@ -1500,7 +1519,7 @@ mp.Axis.prototype.setupProjection = function() {
         // y-direction if upward
         this._CameraUpVector = [0,1,0];
 
-        if (this._DataAspectRatioMode === 'auto') {
+        if (this._DataAspectRatioMode === 'auto') {            
             this._DataAspectRatio = [(this._xLim[1]-this._xLim[0])/(this.w*this.fig.canvas.width),
                                      (this._yLim[1]-this._yLim[0])/(this.h*this.fig.canvas.height),
                                      1];
