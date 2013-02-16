@@ -27,19 +27,6 @@ fig = new matplot.Figure("plot",700,500);
 // add axis to the figure
 ax = fig.axes();
 
-// use the Mercator projection
-// matplot.trans.mercator is a list with two elements
-// the first element is a function with the direct transform
-// and the second element is the inverse transform
-ax.transform(matplot.trans.mercator);
-
-// set range of longitude and latitude
-ax.xLim([-180,180]);
-ax.yLim([-80,80]);
-
-// fix aspect ratio
-ax.DataAspectRatio([1,1,1]);
-
 // loop over all countries and polygones
 for (i=0; i < countries.length; i++) {
   for (j=0; j < countries[i].coordinates.length; j++) {
