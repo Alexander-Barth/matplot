@@ -28,7 +28,10 @@ clean:
 	rm -f $(TARGET_MIN) $(TARGET)
 
 tar: $(TARGET_MIN) $(TARGET)
-	tar --exclude-vcs  --exclude=admin -cvzf ../matplot-$(VERSION).tar.gz .
+	rm -R ~/tmp/matplot
+	svn export $package ~/tmp/matplot; 
+	cp $(TARGET_MIN) $(TARGET) ~/tmp/matplot
+	tar --exclude-vcs  --exclude=admin -C ~/tmp/matplot -cvzf ../matplot-$(VERSION).tar.gz ~/tmp/matplot
 
 upload: tar
 	./admin/googlecode_upload.py -s "version $(VERSION) of matplot" -p matplot -u 'barth.alexander@gmail.com' -l "JavaScript,HTML,Visualization" ../matplot-$(VERSION).tar.gz
