@@ -2267,7 +2267,6 @@ mp.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
         }
         else if (style.marker === 's') {
             opt.fill = style.MarkerFaceColor;
-            //opt['fill-opacity'] = '0.00001';
             opt.stroke = style.MarkerEdgeColor || style.color;
             this.fig.canvas.rect(i[l]-ms/2,j[l]-ms/2,ms,ms,opt);
         }
