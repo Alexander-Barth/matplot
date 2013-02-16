@@ -3,7 +3,7 @@ YUICOMPRESSOR=/home/abarth/Downloads/yuicompressor-2.4.2/build/yuicompressor-2.4
 SOURCE=demos/matplot.js
 
 LICENCE_HEADER=admin/license_header
-VERSION=0.1.2
+VERSION=0.1.3
 TARGET=matplot-$(VERSION).js
 TARGET_MIN=matplot-$(VERSION)-min.js
 
