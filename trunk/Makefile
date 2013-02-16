@@ -6,7 +6,7 @@ LICENCE_HEADER=admin/license_header
 VERSION=0.1.2
 TARGET=matplot-$(VERSION).js
 TARGET_MIN=matplot-$(VERSION)-min.js
-
+TMP=/tmp/matplot
 
 UPLOAD_DIR=gher-diva:/var/www/matplot/
 #UPLOAD_DIR=localhost:/var/www/upload/matplot/
@@ -28,10 +28,10 @@ clean:
 	rm -f $(TARGET_MIN) $(TARGET)
 
 tar: $(TARGET_MIN) $(TARGET)
-	rm -R ~/tmp/matplot
-	svn export $package ~/tmp/matplot; 
-	cp $(TARGET_MIN) $(TARGET) ~/tmp/matplot
-	tar --exclude-vcs  --exclude=admin -C ~/tmp/matplot -cvzf ../matplot-$(VERSION).tar.gz ~/tmp/matplot
+	rm -Rf $(TMP)
+	svn export . $(TMP); 
+	cp $(TARGET_MIN) $(TARGET) $(TMP)
+	tar --exclude-vcs  --exclude=admin -C $(TMP) -cvzf ../matplot-$(VERSION).tar.gz .
 
 upload: tar
 	./admin/googlecode_upload.py -s "version $(VERSION) of matplot" -p matplot -u 'barth.alexander@gmail.com' -l "JavaScript,HTML,Visualization" ../matplot-$(VERSION).tar.gz
