@@ -1,7 +1,7 @@
 /*
   matplot, JavaScript Matrix Plotting library
 
-  Copyright (C) 2012 Alexander Barth <a dot barth at ulg.ac.be>.
+  Copyright (C) 2012, 2013 Alexander Barth <a dot barth at ulg.ac.be>.
 
   Released under the MIT license
 
