@@ -215,6 +215,10 @@ mp.trans = {
     ]
 };
 
+mp.supportsSVG = function () {
+    return document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Shape", "1.0")
+};
+
 mp.peaks = function() {
     var i, j, x=[], y=[], z=[], f;
 
@@ -337,16 +341,18 @@ mp.remove_spurious_decimals = function(s) {
 //
 
 mp.mk = function mk(xmlns,tag,attribs,children) {
-    var elem, child, a, c, style, obj, s;
+    var elem, child, a, c, style, obj, s, setAttr;
 
     attribs = attribs || {};
     children = children || [];
 
     if (xmlns === '') {
         elem = document.createElement(tag);
+        setAttr = function(elem,attr,val) { elem.setAttribute(attr,val); };
     }
     else {
         elem = document.createElementNS(xmlns, tag);
+        setAttr = function(elem,attr,val) { elem.setAttributeNS(null,attr,val); };
     }
 
     for (a in attribs) {
@@ -369,10 +375,10 @@ mp.mk = function mk(xmlns,tag,attribs,children) {
                     }
                 }
 
-                elem.setAttributeNS(null, a, style);
+                setAttr(elem, a, style);
             }
             else {
-                elem.setAttributeNS(null, a, attribs[a]);
+                setAttr(elem, a, attribs[a]);
             }
         }
     }
@@ -2332,6 +2338,20 @@ mp.Figure = function Figure(id,width,height) {
     var that = this;
     this.container = document.getElementById(id);
 
+    if (!mp.supportsSVG()) {
+        this.container.appendChild(
+            mp.mk('','div',{style: {width: width+'px', height: height+'px', border: '1px solid red', 'font-size': 'large'}},
+                [mp.mk('','div',{style: {margin: '2em'}},
+                    [mp.mk('','h3',{style: {color: 'red'}},['Your web browser does not support Scalable Vector Graphics (SVG).']),
+                    mp.mk('','p',{},['Old versions of Internet Explorer (version 8 and before) do unfortunately not understand the SVG standard.']),
+                    'To see the graphics on this web-page you either need to upgrade your version of Internet Explorer (to version 9 or later) ',
+                    'or install a more standard compilant browser such as ',
+                    mp.mk('','a',{href: 'http://www.mozilla.org/'},['Mozilla Firefox']), ' or ', 
+                    mp.mk('','a',{href: 'http://www.google.com/chrome/'},['Google Chrome']), '.'])]));
+            
+            
+        throw 'Error: SVG support is not detected';
+    }
 
     this.outerDIV =
         mp.html('div',
