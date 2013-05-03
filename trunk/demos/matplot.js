@@ -1736,8 +1736,13 @@ var matplot = (function() {
         */
 
         if (this.is2D) {
-            this.drawXTicks();
-            this.drawYTicks();
+            //this.drawXTicks();
+            this.drawAxis(0,this.xTickLabel,this.xTickLen,
+                          (this.xAxisLocation === 'bottom' ? [-1,-1] : [1,1]));
+            this.drawAxis(1,this.yTickLabel,this.yTickLen,
+                          (this.yAxisLocation === 'left' ? [-1,-1] : [1,1]));
+
+            //this.drawYTicks();
         }
 
         // legend
@@ -1748,7 +1753,7 @@ var matplot = (function() {
     };
 
 
-    mp.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen) {
+    mp.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen,ticksRefPoint) {
         var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v=1, ref, 
         behindind = this.behindind, save_project,
         bbox = [this._xLim,this._yLim,this._zLim];
@@ -1789,7 +1794,7 @@ var matplot = (function() {
             return save_project.call(this,cshift(v,-sv),opt);
         };
 
-        this.drawAxisX(tickLabel,tickLen);
+        this.drawAxisX(tickLabel,tickLen,ticksRefPoint);
 
         // restore
         this.project = save_project;
@@ -1812,9 +1817,13 @@ var matplot = (function() {
 
 
 
-    mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen) {
-        var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v, dx, dy, dz,
+    mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen,ticksRefPoint) {
+        var dist2 = Infinity, tmp, axind, p1, p2, p2y, p2z, style, i, j, k, v, dx, dy, dz, num,
         behindind = this.behindind;
+
+        // ticks should be close to this point
+        // normalized screen coordinates from -1 to +1
+        ticksRefPoint = ticksRefPoint || [-1,-1];
 
         // draw grid lines
         k = behindind[2];
@@ -1851,8 +1860,8 @@ var matplot = (function() {
                     // middle point
                     v = [(p1[0]+p2[0])/2,(p1[1]+p2[1])/2];
 
-                    // distance (squared) to point (-1,-1)
-                    tmp = (v[0]+1)*(v[0]+1) + (v[1]+1)*(v[1]+1);
+                    // distance (squared) to point ticksRefPoint
+                    tmp = (v[0]-ticksRefPoint[0])*(v[0]-ticksRefPoint[0]) + (v[1]-ticksRefPoint[1])*(v[1]-ticksRefPoint[1]);
                     
                     if (tmp < dist2) {
                         dist2 = tmp;
@@ -1862,10 +1871,10 @@ var matplot = (function() {
                         // for the position of the tick labels
                         if (Math.abs(p2[0]-p1[0]) > Math.abs(p2[1]-p1[1])) {
                             style = {HorizontalAlignment: 'center',
-                                     VerticalAlignment: 'top'};
+                                     VerticalAlignment: (ticksRefPoint[1] === -1 ? 'top' : 'bottom')};
                         }
                         else {
-                            style = {HorizontalAlignment: 'right',
+                            style = {HorizontalAlignment: (ticksRefPoint[0] === -1 ? 'right' : 'left'),
                                      VerticalAlignment: 'middle'};
                         }
                         
@@ -1882,42 +1891,57 @@ var matplot = (function() {
         this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
 
         for (i = 0; i < this.xTick.length; i++) {
-            // in which orientation show we draw the tick-lines
+            // in which orientation show we draw the tick-lines?
+
+            p1 = this.project([this.xTick[i],this._yLim[j],this._zLim[k]]);
+            p2y = this.project([this.xTick[i],this._yLim[j]+1,this._zLim[k]]);
+            var numy = Math.pow(p2y[0]-p1[0],2) + Math.pow(p2y[1]-p1[1],2);
+
+            p2z = this.project([this.xTick[i],this._yLim[j],this._zLim[k]+1]);
+            var numz = Math.pow(p2z[0]-p1[0],2) + Math.pow(p2z[1]-p1[1],2);
             
-            if (j !== behindind[1]) {
+            // ( numy > 0 && numz === 0) is true in a pure 2D case
+            // where Tick shifted in z dimensions are at the same place on the screen
+
+            if (numy > 0 && (j !== behindind[1] || (numz === 0))) {
+            //if (true) {
                 // in y-direction
                 // determine tick length (unprojected)
 
-                p1 = this.project([this.xTick[i],this._yLim[j],this._zLim[k]]);
-                p2 = this.project([this.xTick[i],this._yLim[j]+1,this._zLim[k]]);
-                dy = tickLen/(2*Math.sqrt(Math.pow(p2[0]-p1[0],2) + Math.pow(p2[1]-p1[1],2)));
+                //p2 = this.project([this.xTick[i],this._yLim[j]+1,this._zLim[k]+1]);
+                console.log('num ',numy,p1,p2y);
 
-                this.drawLine([this.xTick[i],this.xTick[i]],
-                              [this._yLim[j]-dy,this._yLim[j]+dy],
-                              [this._zLim[k],this._zLim[k]]);
+                if (numy > 0) {
+
+                    dy = tickLen/(2*Math.sqrt(numy));
+
+                    this.drawLine([this.xTick[i],this.xTick[i]],
+                                  [this._yLim[j]-dy,this._yLim[j]+dy],
+                                  [this._zLim[k],this._zLim[k]]);
                 
-                this.text(this.xTick[i],
-                          this._yLim[j] + (j === 0 ? -1 : 1) * 2*dy,
-                          this._zLim[k],
-                          tickLabel[i],style);
-
+                    this.text(this.xTick[i],
+                              this._yLim[j] + (j === 0 ? -1 : 1) * 2*dy,
+                              this._zLim[k],
+                              tickLabel[i],style);
+                }
             }
             else {
                 // in z-direction
 
-                p1 = this.project([this.xTick[i],this._yLim[j],this._zLim[k]]);
-                p2 = this.project([this.xTick[i],this._yLim[j],this._zLim[k]+1]);
-                dz = tickLen/(2*Math.sqrt(Math.pow(p2[0]-p1[0],2) + Math.pow(p2[1]-p1[1],2)));
+                if (numz > 0) {
 
-                this.drawLine([this.xTick[i],this.xTick[i]],
-                              [this._yLim[j],this._yLim[j]],
-                              [this._zLim[k]-dz,this._zLim[k]+dz]);
+                    dz = tickLen/(2*Math.sqrt(numz));
+
+                    this.drawLine([this.xTick[i],this.xTick[i]],
+                                  [this._yLim[j],this._yLim[j]],
+                                  [this._zLim[k]-dz,this._zLim[k]+dz]);
                 
-                this.text(this.xTick[i],
-                          this._yLim[j],
-                          this._zLim[k] + (k === 0 ? -1 : 1)* 2 * dz,
-                          tickLabel[i],
-                          style);
+                    this.text(this.xTick[i],
+                              this._yLim[j],
+                              this._zLim[k] + (k === 0 ? -1 : 1)* 2 * dz,
+                              tickLabel[i],
+                              style);
+                }
             }
         }
     };
