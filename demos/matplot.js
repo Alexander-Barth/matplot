@@ -1566,24 +1566,26 @@ var matplot = (function() {
             }
         }
 
+        // scale vector by aspect ratio and apply transformation function
         var tr = function(x) { 
-            var xs = numeric.div(x,that._DataAspectRatio), n=xs.length, u;
-            var p = that._transform[0]([xs[0],xs[1],xs[2],0]);
+            var xs = numeric.div(x,that._DataAspectRatio);
+            var p = that._transform[0]([xs[0],xs[1],xs[2],1]);
             return [p[0],p[1],p[2]];
-            //return numeric.div(x,that._DataAspectRatio); 
         };
 
         this.modelView = numeric.dot(
             mp.LookAt(tr(this._CameraPosition),
                       tr(this._CameraTarget),
-                      tr(this._CameraUpVector)),
+                      this._CameraUpVector),
             numeric.inv(mp.scale(this._DataAspectRatio)));
         //console.log('modelView ',numeric.prettyPrint(this.modelView));
 
-        // should be [0,0,....] i.e. the target should be at the center
-        console.log('modelView * Target',  
+
+        // should be [0,0,....] i.e. the target (transformed) should be at the center
+        var tCT = tr(this._CameraTarget);
+        console.log('modelView * transformed camera Target',  
                     numeric.dot(this.modelView,
-                                [this._CameraTarget[0],this._CameraTarget[1],this._CameraTarget[2],1]));
+                                [tCT[0],tCT[1],tCT[2],1]));
 
 
         
