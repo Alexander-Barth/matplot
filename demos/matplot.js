@@ -1467,6 +1467,7 @@ var matplot = (function() {
         zNear = -10, zFar = 200;
 
         // real range of x, y and z variable (might be [0,0])
+        // or range set by user if ?LimMode is manual
         this._xrange = this.xLim();
         this._yrange = this.yLim();
         this._zrange = this.zLim();
@@ -1565,12 +1566,23 @@ var matplot = (function() {
             }
         }
 
+        var tr = function(x) { 
+            //return this._transform[0](numeric.div(this._CameraPosition,this._DataAspectRatio)); 
+            return numeric.div(this._CameraPosition,this._DataAspectRatio); 
+        };
+
         this.modelView = numeric.dot(
             mp.LookAt(numeric.div(this._CameraPosition,this._DataAspectRatio),
                       numeric.div(this._CameraTarget,this._DataAspectRatio),
                       numeric.div(this._CameraUpVector,this._DataAspectRatio)),
             numeric.inv(mp.scale(this._DataAspectRatio)));
         //console.log('modelView ',numeric.prettyPrint(this.modelView));
+
+        // should be [0,0,....] i.e. the target should be at the center
+        console.log('modelView * Target',  
+                    numeric.dot(this.modelView,
+                                [this._CameraTarget[0],this._CameraTarget[1],this._CameraTarget[2],1]));
+
 
         
         if (this._projection === 'orthographic') {
@@ -1691,6 +1703,8 @@ var matplot = (function() {
         var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, scale, that = this, elem, lr, ul, an;
 
         this.setupProjection();
+        
+        console.log('project ',this.project([25.5,-0.3,0]));
 
         if (!this.is2D) {
             this.drawAxis(0,this.xTickLabel,this.xTickLen);
@@ -1737,10 +1751,15 @@ var matplot = (function() {
 
         if (this.is2D) {
             //this.drawXTicks();
-            this.drawAxis(0,this.xTickLabel,this.xTickLen,
+/*            this.drawAxis(0,this.xTickLabel,this.xTickLen,
                           (this.xAxisLocation === 'bottom' ? [-1,-1] : [1,1]));
             this.drawAxis(1,this.yTickLabel,this.yTickLen,
                           (this.yAxisLocation === 'left' ? [-1,-1] : [1,1]));
+*/
+            this.drawAxis(0,this.xTickLabel,this.xTickLen,
+                          {position: this.xAxisLocation});
+            this.drawAxis(1,this.yTickLabel,this.yTickLen,
+                          {position: this.yAxisLocation});
 
             //this.drawYTicks();
         }
@@ -1753,7 +1772,7 @@ var matplot = (function() {
     };
 
 
-    mp.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen,ticksRefPoint) {
+    mp.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen,options) {
         var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v=1, ref, 
         behindind = this.behindind, save_project,
         bbox = [this._xLim,this._yLim,this._zLim];
@@ -1794,7 +1813,7 @@ var matplot = (function() {
             return save_project.call(this,cshift(v,-sv),opt);
         };
 
-        this.drawAxisX(tickLabel,tickLen,ticksRefPoint);
+        this.drawAxisX(tickLabel,tickLen,options);
 
         // restore
         this.project = save_project;
@@ -1817,13 +1836,34 @@ var matplot = (function() {
 
 
 
-    mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen,ticksRefPoint) {
+    mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen,options) {
         var dist2 = Infinity, tmp, axind, p1, p2, p2y, p2z, style, i, j, k, v, dx, dy, dz, num,
-        behindind = this.behindind;
+        ticksRefPoint, ticksRefDir, position, behindind = this.behindind;
 
+        options = options || {};
         // ticks should be close to this point
         // normalized screen coordinates from -1 to +1
         ticksRefPoint = ticksRefPoint || [-1,-1];
+        ticksRefDir = ticksRefDir || [1,1];
+        position = options.position;
+
+        if (position === 'bottom') {
+            ticksRefDir = [0,1];
+        }
+        else if (position === 'top') {
+            ticksRefDir = [0,-1];
+        }
+        else if (position === 'right') {
+            ticksRefDir = [-1,0];
+        }
+        else if (position === 'left') {
+            ticksRefDir = [1,0];
+        }
+
+/*                          {ticksRefDir: (this.xAxisLocation === 'bottom' ? [0,1] : [0,-1])});
+            this.drawAxis(1,this.yTickLabel,this.yTickLen,
+                          {ticksRefDir: (this.yAxisLocation === 'left' ? [1,0] : [-1,0])});
+*/
 
         // draw grid lines
         k = behindind[2];
@@ -1862,6 +1902,9 @@ var matplot = (function() {
 
                     // distance (squared) to point ticksRefPoint
                     tmp = (v[0]-ticksRefPoint[0])*(v[0]-ticksRefPoint[0]) + (v[1]-ticksRefPoint[1])*(v[1]-ticksRefPoint[1]);
+
+                    // distance along reference direction
+                    tmp = v[0] * ticksRefDir[0] + v[1] * ticksRefDir[1];
                     
                     if (tmp < dist2) {
                         dist2 = tmp;
@@ -1871,10 +1914,10 @@ var matplot = (function() {
                         // for the position of the tick labels
                         if (Math.abs(p2[0]-p1[0]) > Math.abs(p2[1]-p1[1])) {
                             style = {HorizontalAlignment: 'center',
-                                     VerticalAlignment: (ticksRefPoint[1] === -1 ? 'top' : 'bottom')};
+                                     VerticalAlignment: (ticksRefDir[1] > 0 ? 'top' : 'bottom')};
                         }
                         else {
-                            style = {HorizontalAlignment: (ticksRefPoint[0] === -1 ? 'right' : 'left'),
+                            style = {HorizontalAlignment: (ticksRefDir[0] > 0 ? 'right' : 'left'),
                                      VerticalAlignment: 'middle'};
                         }
                         
@@ -2449,6 +2492,7 @@ var matplot = (function() {
             
             ax = that._axes[0];
             v = ax.unproject([i,j]);
+            console.log('getcoordp v',v);
             return [v[0],v[1]];
         }
 
