@@ -1755,11 +1755,6 @@ var matplot = (function() {
 
         if (this.is2D) {
             //this.drawXTicks();
-/*            this.drawAxis(0,this.xTickLabel,this.xTickLen,
-                          (this.xAxisLocation === 'bottom' ? [-1,-1] : [1,1]));
-            this.drawAxis(1,this.yTickLabel,this.yTickLen,
-                          (this.yAxisLocation === 'left' ? [-1,-1] : [1,1]));
-*/
             this.drawAxis(0,this.xTickLabel,this.xTickLen,
                           {position: this.xAxisLocation, box: true});
             this.drawAxis(1,this.yTickLabel,this.yTickLen,
@@ -1879,6 +1874,7 @@ var matplot = (function() {
                           {linespec: this.gridLineStyle});
         }
 
+        // these lines might be overdraw by a solid line (if box is true)
         j = behindind[1];
         for (k = 0; k < this.zTick.length; k++) {
             this.drawLine(this._xLim,
@@ -1932,8 +1928,6 @@ var matplot = (function() {
             }
         }
 
-        j = axind[0];
-        k = axind[1];
 
         if (box) {
             for (j = 0; j < 2; j++) {
@@ -1941,17 +1935,23 @@ var matplot = (function() {
                     this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
                 }
             }
-        j = axind[0];
-        k = axind[1];
-
         }
         else {
             // x-axis
-            this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
+            j = axind[0];
+            k = axind[1];
+
+            //this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
         }
+
+        j = axind[0];
+        k = axind[1];
 
         for (i = 0; i < this.xTick.length; i++) {
             // in which orientation show we draw the tick-lines?
+            // tick-lines should be in the same plane at the point
+            // databox[behindind[0],behindind[1],behindind[2]]
+            // unless this is not possible (zero gradient of projection)
 
             p1 = this.project([this.xTick[i],this._yLim[j],this._zLim[k]]);
             p2y = this.project([this.xTick[i],this._yLim[j]+1,this._zLim[k]]);
