@@ -1836,14 +1836,17 @@ var matplot = (function() {
 
 
     mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen,options) {
-        var dist2 = Infinity, tmp, axind, p1, p2, p2y, p2z, style, i, j, k, v, dx, dy, dz, num,
-        ticksRefPoint, ticksRefDir, position, box, behindind = this.behindind;
+        var dist2 = Infinity, tmp, axind, p1, p2, p2y, p2z, style, i, j, k, v, 
+          dx, dy, dz, numy, numz,
+          ticksRefDir, position, box, behindind = this.behindind;
 
         options = options || {};
-        // ticks should be close to this point
-        // normalized screen coordinates from -1 to +1
-        ticksRefPoint = ticksRefPoint || [-1,-1];
-        ticksRefDir = ticksRefDir || [1,1];
+        // reference direction based on which we choose were to put
+        // the axis. A good location of an axis would be an axis whose middel point
+        // has a low projection with the direction ticksRefDir
+        // I.e. if ticksRefDir = [1,1] then the lower-left would be good.
+
+        ticksRefDir = options.ticksRefDir || [1,1];
         box = (options.box !== undefined ? options.box : false);
         position = options.position;
 
@@ -1859,11 +1862,6 @@ var matplot = (function() {
         else if (position === 'left') {
             ticksRefDir = [1,0];
         }
-
-/*                          {ticksRefDir: (this.xAxisLocation === 'bottom' ? [0,1] : [0,-1])});
-            this.drawAxis(1,this.yTickLabel,this.yTickLen,
-                          {ticksRefDir: (this.yAxisLocation === 'left' ? [1,0] : [-1,0])});
-*/
 
         // draw grid lines
         k = behindind[2];
@@ -1901,9 +1899,6 @@ var matplot = (function() {
                     // middle point
                     v = [(p1[0]+p2[0])/2,(p1[1]+p2[1])/2];
 
-                    // distance (squared) to point ticksRefPoint
-                    tmp = (v[0]-ticksRefPoint[0])*(v[0]-ticksRefPoint[0]) + (v[1]-ticksRefPoint[1])*(v[1]-ticksRefPoint[1]);
-
                     // distance along reference direction
                     tmp = v[0] * ticksRefDir[0] + v[1] * ticksRefDir[1];
                     
@@ -1920,14 +1915,11 @@ var matplot = (function() {
                         else {
                             style = {HorizontalAlignment: (ticksRefDir[0] > 0 ? 'right' : 'left'),
                                      VerticalAlignment: 'middle'};
-                        }
-                        
-                    }
-                    
+                        }                        
+                    }                    
                 }
             }
         }
-
 
         if (box) {
             for (j = 0; j < 2; j++) {
@@ -1955,53 +1947,44 @@ var matplot = (function() {
 
             p1 = this.project([this.xTick[i],this._yLim[j],this._zLim[k]]);
             p2y = this.project([this.xTick[i],this._yLim[j]+1,this._zLim[k]]);
-            var numy = Math.pow(p2y[0]-p1[0],2) + Math.pow(p2y[1]-p1[1],2);
+            numy = Math.pow(p2y[0]-p1[0],2) + Math.pow(p2y[1]-p1[1],2);
 
             p2z = this.project([this.xTick[i],this._yLim[j],this._zLim[k]+1]);
-            var numz = Math.pow(p2z[0]-p1[0],2) + Math.pow(p2z[1]-p1[1],2);
+            numz = Math.pow(p2z[0]-p1[0],2) + Math.pow(p2z[1]-p1[1],2);
             
-            // ( numy > 0 && numz === 0) is true in a pure 2D case
-            // where Tick shifted in z dimensions are at the same place on the screen
-
             if (numy > 0 && (j !== behindind[1] || (numz === 0))) {
-            //if (true) {
                 // in y-direction
                 // determine tick length (unprojected)
 
-                //p2 = this.project([this.xTick[i],this._yLim[j]+1,this._zLim[k]+1]);
-                //console.log('num ',numy,p1,p2y);
-
-                if (numy > 0) {
-
-                    dy = tickLen/(2*Math.sqrt(numy));
-
-                    this.drawLine([this.xTick[i],this.xTick[i]],
-                                  [this._yLim[j]-dy,this._yLim[j]+dy],
-                                  [this._zLim[k],this._zLim[k]]);
+                dy = tickLen/(2*Math.sqrt(numy));
                 
-                    this.text(this.xTick[i],
-                              this._yLim[j] + (j === 0 ? -1 : 1) * 2*dy,
-                              this._zLim[k],
-                              tickLabel[i],style);
-                }
+                this.drawLine([this.xTick[i],this.xTick[i]],
+                              [this._yLim[j]-dy,this._yLim[j]+dy],
+                              [this._zLim[k],this._zLim[k]]);
+                
+                this.text(this.xTick[i],
+                          this._yLim[j] + (j === 0 ? -1 : 1) * 2*dy,
+                          this._zLim[k],
+                          tickLabel[i],style);
             }
-            else {
+            else if (numz > 0) {
                 // in z-direction
 
-                if (numz > 0) {
 
-                    dz = tickLen/(2*Math.sqrt(numz));
-
-                    this.drawLine([this.xTick[i],this.xTick[i]],
-                                  [this._yLim[j],this._yLim[j]],
-                                  [this._zLim[k]-dz,this._zLim[k]+dz]);
+                dz = tickLen/(2*Math.sqrt(numz));
                 
-                    this.text(this.xTick[i],
-                              this._yLim[j],
-                              this._zLim[k] + (k === 0 ? -1 : 1)* 2 * dz,
-                              tickLabel[i],
-                              style);
-                }
+                this.drawLine([this.xTick[i],this.xTick[i]],
+                              [this._yLim[j],this._yLim[j]],
+                              [this._zLim[k]-dz,this._zLim[k]+dz]);
+                
+                this.text(this.xTick[i],
+                          this._yLim[j],
+                          this._zLim[k] + (k === 0 ? -1 : 1)* 2 * dz,
+                          tickLabel[i],
+                          style);
+            }
+            else {
+                console.warn('Cannot determine orientation of ticks');
             }
         }
     };
