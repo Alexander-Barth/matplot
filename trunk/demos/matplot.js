@@ -2208,7 +2208,17 @@ var matplot = (function() {
         style = style || {};
 
         for (l = 0; l < x.length; l++) {
-            pos = this.project([x[l],y[l],z[l]]);
+            // check if any element is equal to NaN
+            // if yes, draw the line segment so far
+
+            if (isNaN(x[l]) || isNaN(y[l]) || isNaN(z[l])) {
+                //this.drawProjectedLine(i,j,style,x,y,z);
+                pos = [NaN,NaN];
+            }
+            else {
+                pos = this.project([x[l],y[l],z[l]]);
+            }
+
             i.push(pos[0]);
             j.push(pos[1]);
         }
@@ -2218,39 +2228,59 @@ var matplot = (function() {
 
 
     mp.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
-        var l, opt = {}, that = this, ms;
+        var l, opt = {}, that = this, ms, is = [], js = [];
         style = style || {};
 
-        this.fig.canvas.line(i,j,style);
+        //this.fig.canvas.line(i,j,style);
 
+        // plot line segments not interrupted by NaNs
         for (l = 0; l < i.length; l++) {
-            if (x) {
-                opt.data = [x[l],y[l]];
-                opt['pointer-events'] = 'visible';
-                opt.onclick = (function (l) {
-                    return function (ev) {
-                        //console.log(ev);
-                        that.toggleAnnotation(ev,ev.target,x[l],y[l],z[l]);
-                        //ev.stopPropagation();
-                    };
-                }(l));
+            if (isNaN(i[l]) || isNaN(j[l])) {
+                if (is.length > 0) {
+                    this.fig.canvas.line(is,js,style);
+                    is = [];
+                    js = [];
+                }
             }
-
-            ms = style.markersize || 7;
-
-            if (style.marker === 'o') {
-                opt.fill = style.MarkerFaceColor;
-                opt.stroke = style.MarkerEdgeColor || style.color;
-                this.fig.canvas.circle(i[l],j[l],ms,opt);
-            }
-            else if (style.marker === 's') {
-                opt.fill = style.MarkerFaceColor;
-                opt.stroke = style.MarkerEdgeColor || style.color;
-                this.fig.canvas.rect(i[l]-ms/2,j[l]-ms/2,ms,ms,opt);
+            else {
+                is.push(i[l]);
+                js.push(j[l]);
             }
         }
+        this.fig.canvas.line(is,js,style);
 
 
+        // plot makers
+
+        for (l = 0; l < i.length; l++) {
+
+            if (!isNaN(i[l]) && !isNaN(j[l])) {
+                if (x) {
+                    opt.data = [x[l],y[l]];
+                    opt['pointer-events'] = 'visible';
+                    opt.onclick = (function (l) {
+                        return function (ev) {
+                            //console.log(ev);
+                            that.toggleAnnotation(ev,ev.target,x[l],y[l],z[l]);
+                            //ev.stopPropagation();
+                        };
+                    }(l));
+                }
+
+                ms = style.markersize || 7;
+                
+                if (style.marker === 'o') {
+                    opt.fill = style.MarkerFaceColor;
+                    opt.stroke = style.MarkerEdgeColor || style.color;
+                    this.fig.canvas.circle(i[l],j[l],ms,opt);
+                }
+                else if (style.marker === 's') {
+                    opt.fill = style.MarkerFaceColor;
+                    opt.stroke = style.MarkerEdgeColor || style.color;
+                    this.fig.canvas.rect(i[l]-ms/2,j[l]-ms/2,ms,ms,opt);
+                }
+            }
+        }
     };
 
 
