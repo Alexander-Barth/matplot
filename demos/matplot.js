@@ -1761,9 +1761,9 @@ var matplot = (function() {
                           (this.yAxisLocation === 'left' ? [-1,-1] : [1,1]));
 */
             this.drawAxis(0,this.xTickLabel,this.xTickLen,
-                          {position: this.xAxisLocation});
+                          {position: this.xAxisLocation, box: true});
             this.drawAxis(1,this.yTickLabel,this.yTickLen,
-                          {position: this.yAxisLocation});
+                          {position: this.yAxisLocation, box: true});
 
             //this.drawYTicks();
         }
@@ -1842,13 +1842,14 @@ var matplot = (function() {
 
     mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen,options) {
         var dist2 = Infinity, tmp, axind, p1, p2, p2y, p2z, style, i, j, k, v, dx, dy, dz, num,
-        ticksRefPoint, ticksRefDir, position, behindind = this.behindind;
+        ticksRefPoint, ticksRefDir, position, box, behindind = this.behindind;
 
         options = options || {};
         // ticks should be close to this point
         // normalized screen coordinates from -1 to +1
         ticksRefPoint = ticksRefPoint || [-1,-1];
         ticksRefDir = ticksRefDir || [1,1];
+        box = (options.box !== undefined ? options.box : false);
         position = options.position;
 
         if (position === 'bottom') {
@@ -1934,8 +1935,20 @@ var matplot = (function() {
         j = axind[0];
         k = axind[1];
 
-        // x-axis
-        this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
+        if (box) {
+            for (j = 0; j < 2; j++) {
+                for (k = 0; k < 2; k++) {
+                    this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
+                }
+            }
+        j = axind[0];
+        k = axind[1];
+
+        }
+        else {
+            // x-axis
+            this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
+        }
 
         for (i = 0; i < this.xTick.length; i++) {
             // in which orientation show we draw the tick-lines?
@@ -1956,7 +1969,7 @@ var matplot = (function() {
                 // determine tick length (unprojected)
 
                 //p2 = this.project([this.xTick[i],this._yLim[j]+1,this._zLim[k]+1]);
-                console.log('num ',numy,p1,p2y);
+                //console.log('num ',numy,p1,p2y);
 
                 if (numy > 0) {
 
@@ -2464,7 +2477,7 @@ var matplot = (function() {
                                                mp.html('li',{'class' : 'matplot-about'},[
                                                    mp.html('a',{'href': 'http://matplot.googlecode.com', 
                                                                 'target': '_blank'},
-                                                           ['Abourt matplot'])])
+                                                           ['About matplot'])])
                                            ])
                                        ]));
 
