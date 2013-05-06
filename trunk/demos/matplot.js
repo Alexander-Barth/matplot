@@ -1754,13 +1754,10 @@ var matplot = (function() {
         */
 
         if (this.is2D) {
-            //this.drawXTicks();
             this.drawAxis(0,this.xTickLabel,this.xTickLen,
                           {position: this.xAxisLocation, box: true});
             this.drawAxis(1,this.yTickLabel,this.yTickLen,
                           {position: this.yAxisLocation, box: true});
-
-            //this.drawYTicks();
         }
 
         // legend
@@ -1990,108 +1987,16 @@ var matplot = (function() {
     };
 
 
-    mp.Axis.prototype.drawXTicks = function() {
-        var i, y, pos, style;
-
-        style =
-            {HorizontalAlignment: 'center',
-             FontSize: this.FontSize,
-             color: this.color
-            };
-
-        if (this.xAxisLocation === 'bottom') {
-            style.VerticalAlignment = 'top';
-            style.offsetj = this.xTickLen/2;
-            y = this._yLim[0];
-        }
-        else {
-            style.VerticalAlignment = 'bottom';
-            style.offsetj = -this.xTickLen/2;
-            y = this._yLim[1];
-        }
-
-        for (i = 0; i < 2; i++) {
-            this.drawLine([this._xLim[i],this._xLim[i]],
-                          this._yLim,
-                          [0,0]);
-        }
-
-        for (i = 0; i < this.xTick.length; i++) {
-            pos = this.project([this.xTick[i],y]);
-
-            this.fig.canvas.line([pos[0],pos[0]],
-                                 [pos[1]-this.xTickLen/2,pos[1]+this.xTickLen/2],
-                                 {color: 'black'});
-
-            this.text(this.xTick[i],y,0,this.xTickLabel[i],style);
-
-            // major grid lines
-            if (this.xGrid === 'on') {
-                this.drawLine([this.xTick[i],this.xTick[i]],
-                              this._yLim,
-                              [0,0],
-                              {linespec: this.gridLineStyle});
-            }
-
-        }
-
-    };
-
-    mp.Axis.prototype.drawYTicks = function() {
-        var i, x, pos, style;
-
-        style =
-            {VerticalAlignment: 'middle',
-             FontSize: this.FontSize,
-             color: this.color
-            };
-
-        if (this.yAxisLocation === 'left') {
-            style.HorizontalAlignment = 'right';
-            style.offseti = -this.yTickLen/2;
-            x = this._xLim[0];
-        }
-        else {
-            style.HorizontalAlignment = 'left';
-            style.offseti = this.yTickLen/2;
-            x = this._xLim[1];
-        }
-
-        for (i = 0; i < 2; i++) {
-            this.drawLine(this._xLim,
-                          [this._yLim[i],this._yLim[i]],
-                          [0,0]);
-        }
-
-        for (i = 0; i < this.yTick.length; i++) {
-            pos = this.project([x,this.yTick[i]]);
-
-            this.fig.canvas.line([pos[0]-this.yTickLen/2,pos[0]+this.yTickLen/2],
-                                 [pos[1],pos[1]],
-                                 {color: 'black'});
-
-            this.text(x,this.yTick[i],0,this.yTickLabel[i],style);
-
-            // major grid lines
-            if (this.yGrid === 'on') {
-                this.drawLine(this._xLim,
-                              [this.yTick[i],this.yTick[i]],
-                              [0,0],
-                              {linespec: this.gridLineStyle});
-            }
-
-        }
-    };
-
     mp.Axis.prototype.legend = function(state) {
         state = (state !== undefined ? state : true);
         this._legend = state;
     };
 
     mp.Axis.prototype.drawLegend = function() {
-        var style, label, maxWidth = -Infinity, maxHeight=-Infinity, maxMarkerSize=0, bbox, x, y, n=0, i, w, h,
-        margin = 10, padding = 7, lineSpace = 1, iconWidth = 25, iconSep = 5,
-        legendWidth, legendHeight;
+        var style, label, maxWidth = -Infinity, maxHeight=-Infinity, 
+            maxMarkerSize=0, bbox, x, y, n=0, i, w, h,
+            margin = 10, padding = 7, lineSpace = 1, iconWidth = 25, iconSep = 5,
+            legendWidth, legendHeight;
 
 
         for (i = 0; i<this.children.length; i++) {
