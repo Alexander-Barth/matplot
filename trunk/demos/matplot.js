@@ -1567,14 +1567,16 @@ var matplot = (function() {
         }
 
         var tr = function(x) { 
-            //return this._transform[0](numeric.div(this._CameraPosition,this._DataAspectRatio)); 
-            return numeric.div(this._CameraPosition,this._DataAspectRatio); 
+            var xs = numeric.div(x,that._DataAspectRatio), n=xs.length, u;
+            var p = that._transform[0]([xs[0],xs[1],xs[2],0]);
+            return [p[0],p[1],p[2]];
+            //return numeric.div(x,that._DataAspectRatio); 
         };
 
         this.modelView = numeric.dot(
-            mp.LookAt(numeric.div(this._CameraPosition,this._DataAspectRatio),
-                      numeric.div(this._CameraTarget,this._DataAspectRatio),
-                      numeric.div(this._CameraUpVector,this._DataAspectRatio)),
+            mp.LookAt(tr(this._CameraPosition),
+                      tr(this._CameraTarget),
+                      tr(this._CameraUpVector)),
             numeric.inv(mp.scale(this._DataAspectRatio)));
         //console.log('modelView ',numeric.prettyPrint(this.modelView));
 
