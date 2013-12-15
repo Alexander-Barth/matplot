@@ -2814,8 +2814,8 @@ var matplot = (function() {
             return [v[0],v[1]];
         }
 
-        this.md = null;
-        this.md2 = null;
+        this.position1 = null;
+        this.position2 = null;
         this.dragMode = 'panning';
         this.dragMode = 'zooming';
 
@@ -2834,13 +2834,13 @@ var matplot = (function() {
             // IE8- behaviour is different, but IE9 should be W3C conform
             // http://msdn.microsoft.com/en-us/library/ie/ff974877%28v=vs.85%29.aspx
             if (ev.button === 0) {
-                that.md = ev;
-                that.po = getcoordp(that.md); // origin
+                that.position1 = ev;
+                that.po = getcoordp(that.position1); // origin
                 ax = that._axes[0];
                 that.orig_xlim = ax.xLim();
-                console.log('that.md',that.md);
+                console.log('that.position1',that.position1);
 
-                p1 = getcoord(that.md);
+                p1 = getcoord(that.position1);
                 that.zoomrect.style.display = 'block';
                 that.zoomrect.style.left = p1[0] + 'px';
                 that.zoomrect.style.top = p1[1] + 'px';
@@ -2859,9 +2859,9 @@ var matplot = (function() {
             }
             
 
-            if (that.md !== null && that.md2 !== null) {
-                p1 = getcoordp(that.md);
-                p2 = getcoordp(that.md2);
+            if (that.position1 !== null && that.position2 !== null) {
+                p1 = getcoordp(that.position1);
+                p2 = getcoordp(that.position2);
 
                 if (that.dragMode === 'zooming') {
                     ax = that._axes[0];
@@ -2871,8 +2871,8 @@ var matplot = (function() {
                 }        
             }
 
-            that.md = null;
-            that.md2 = null;
+            that.position1 = null;
+            that.position2 = null;
         },false); // tigger event in bubbling phase (so that it might be cancled 
 
         //this.canvas.elem.addEventListener('mousemove',function(ev) {
@@ -2882,26 +2882,13 @@ var matplot = (function() {
             //console.log('mousemove ',ev);
 
 
-            if (that.md) {
-                that.md2 = ev;
-                p1 = getcoord(ev);
-                p2 = getcoord(that.md);
-
+            if (that.position1) {
+                that.position2 = ev;
 
                 if (that.dragMode === 'zooming') {
-                    //console.log('mousemove ',getcoord(ev),getcoord(that.md));
-                    x = Math.min(p1[0],p2[0]);
-                    w = Math.abs(p2[0]-p1[0]);
-                    
-                    y = Math.min(p1[1],p2[1]);
-                    h = Math.abs(p2[1]-p1[1]);
-
-                    //console.log('mousemove ',x,y,w,h);
-                    //that.dragRect = that.canvas.rect(x,y,w,h);
-
                     // in pixels of Canvas element
-                    p1 = getcoord(that.md);
-                    p2 = getcoord(that.md2);
+                    p1 = getcoord(that.position1);
+                    p2 = getcoord(that.position2);
                     x = Math.min(p1[0],p2[0]);
                     w = Math.abs(p2[0]-p1[0]);
                     
@@ -2916,7 +2903,7 @@ var matplot = (function() {
 
                 }
                 else {
-                    po = getcoordp(that.md); // origin
+                    po = getcoordp(that.position1); // origin
                     p1 = getcoordp(ev);
 
                     //console.log('panning ',p1,po);
