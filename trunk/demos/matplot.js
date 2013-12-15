@@ -721,8 +721,24 @@ var matplot = (function() {
 
         this.context = this.canvas.getContext('2d');
         this.idconter = 0;
+
+        // list of interactive elements
+        this.interactive = [];
+
+        var that = this;
+        this.elem.addEventListener('mousedown',function(ev) {
+            var ev2 = {};
+
+            ev2.x = ev.pageX - that.container.offsetLeft;
+            ev2.y = ev.pageY - that.container.offsetTop;
+
+            console.log('click pe',ev2);
+            that.processEvent(ev2);
+        });
+
     };
 
+    
     mp.RasterCanvas.prototype.id = function () {
         return 'matplot' + (this.idconter++);
     };
@@ -751,6 +767,23 @@ var matplot = (function() {
 
     mp.RasterCanvas.prototype.remove = function(elem) {
         //this.parent().removeChild(elem);
+    };
+
+    mp.RasterCanvas.prototype.processEvent = function (ev) {
+        var i, elem;
+
+        for (i = 0; i < this.interactive.length; i++) {
+            elem = this.interactive[i];
+
+            if (elem[0] <= ev.x && ev.x <= elem[1] &&
+                elem[2] <= ev.y && ev.y <= elem[3]) {
+                
+                // call event handler
+                elem[4](ev);
+            }
+        }
+        
+        return 'matplot' + (this.idconter++);
     };
 
     mp.RasterCanvas.prototype.clear = function() {
@@ -819,6 +852,10 @@ var matplot = (function() {
         this.context.rect(x,y,width,height); 
         this.context.stroke();
         this.context.restore();
+
+        if (style.onclick) {
+            this.interactive.push([x,x+width,y,y+height,style.onclick]);
+        }
 
         return rect;
     };
@@ -2739,9 +2776,9 @@ var matplot = (function() {
                     'left': '100px',
                     'top': '100px'}}));
 
+        // choose back-end
         this.canvas = new mp.SVGCanvas(this.outerDIV,width,height);
         //this.canvas = new mp.RasterCanvas(this.outerDIV,width,height);
-
 
         this.outerDIV.appendChild(
             this.contextmenu = mp.html('div',{
