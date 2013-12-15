@@ -693,7 +693,6 @@ var matplot = (function() {
 
 
     mp.RasterCanvas = function RasterCanvas(container,width,height) {
-        this.xmlns = "http://www.w3.org/2000/svg";
         this.width = width;
         this.height = height;
 
@@ -2770,11 +2769,11 @@ var matplot = (function() {
                 'style': {
                     'position': 'absolute',
                     'display': 'none',
-                    'width': '100px',
-                    'height': '100px',
+                    'width': '0px',
+                    'height': '0px',
                     'border': '1px solid black',
-                    'left': '100px',
-                    'top': '100px'}}));
+                    'left': '0px',
+                    'top': '0px'}}));
 
         // choose back-end
         this.canvas = new mp.SVGCanvas(this.outerDIV,width,height);
@@ -2878,7 +2877,6 @@ var matplot = (function() {
                 console.log('that.position1',that.position1);
 
                 p1 = getcoord(that.position1);
-                that.zoomrect.style.display = 'block';
                 that.zoomrect.style.left = p1[0] + 'px';
                 that.zoomrect.style.top = p1[1] + 'px';
                 that.zoomrect.style.width = '0px';
@@ -2933,6 +2931,7 @@ var matplot = (function() {
                     h = Math.abs(p2[1]-p1[1]);
                     
 
+                    that.zoomrect.style.display = 'block';
                     that.zoomrect.style.left = x + 'px';
                     that.zoomrect.style.top = y + 'px';
                     that.zoomrect.style.width = w + 'px';
@@ -2954,8 +2953,8 @@ var matplot = (function() {
             }
         });
 
-        //this.outerDIV.addEventListener('contextmenu',function(ev) {
-        this.canvas.elem.addEventListener('contextmenu',function(ev) {
+        this.outerDIV.addEventListener('contextmenu',function(ev) {
+        //this.canvas.elem.addEventListener('contextmenu',function(ev) {
             var i,j;
             i = ev.pageX - that.container.offsetLeft;
             j = ev.pageY - that.container.offsetTop;
