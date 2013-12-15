@@ -402,6 +402,20 @@ var matplot = (function() {
         return mp.mk('',tag,attribs,children);
     };
 
+    mp.dasharray = function(linespec) {
+        if (linespec === '-') {
+            return [];
+        }
+        else if (linespec === '-.') {
+            return [15,5,1,5];
+        }
+        else if (linespec === ':') {
+            return [1,3];
+        }
+        else if (linespec === '--') {
+            return [15,5];
+        }
+    }
 
     mp.SVGCanvas = function SVGCanvas(container,width,height) {
         this.xmlns = "http://www.w3.org/2000/svg";
@@ -419,6 +433,8 @@ var matplot = (function() {
             },
                                [this.axis = this.mk('g',{})]));
 
+        // event handler will be attached to this.elem
+        this.elem = this.svg;
         this.parentStack = [this.axis];
 
         this.idconter = 0;
@@ -631,17 +647,12 @@ var matplot = (function() {
         if (linespec === 'none') {
             return;
         }
-        else if (linespec === '-') {
+        
+        if (linespec === '-') {
             dasharray = 'none';
         }
-        else if (linespec === '-.') {
-            dasharray = '15,5,1,5';
-        }
-        else if (linespec === ':') {
-            dasharray = '1,3';
-        }
-        else if (linespec === '--') {
-            dasharray = '15,5';
+        else {
+            dasharray = mp.dasharray(linespec).map(function(x) { return x.toString(); }).join();
         }
 
         for (i = 0; i < x.length; i++) {
@@ -678,6 +689,358 @@ var matplot = (function() {
 
         return xml;
     };
+
+
+
+    mp.RasterCanvas = function RasterCanvas(container,width,height) {
+        this.xmlns = "http://www.w3.org/2000/svg";
+        this.width = width;
+        this.height = height;
+
+        this.container = container;
+        this.container.appendChild(
+            this.canvas = mp.mk('','canvas',{
+                width: width, 
+                height: height
+            }));
+
+        this.container.appendChild(
+            this.svg = this.mk('svg',{
+                version: '1.1',
+                baseProfile: 'basic',
+                //xmlns: this.xmlns,
+                width: width, 
+                height: height
+            },
+                               [this.axis = this.mk('g',{})]));
+
+        // event handler will be attached to this.elem
+        //this.elem = this.svg;
+        this.elem = this.canvas;
+        this.parentStack = [this.axis];
+
+        this.context = this.canvas.getContext('2d');
+        this.idconter = 0;
+    };
+
+    mp.RasterCanvas.prototype.id = function () {
+        return 'matplot' + (this.idconter++);
+    };
+
+    mp.RasterCanvas.prototype.push = function (elem) {
+        this.context.save();  
+        this.parentStack.push(elem);
+    };
+
+    mp.RasterCanvas.prototype.pop = function () {
+        this.context.restore();
+        return this.parentStack.pop();
+    };
+
+    mp.RasterCanvas.prototype.parent = function () {
+        return this.parentStack[this.parentStack.length-1];
+    };
+
+    mp.RasterCanvas.prototype.mk = function mk(tag,attribs,children) {
+        return mp.mk(this.xmlns,tag,attribs,children);
+    };
+
+    mp.RasterCanvas.prototype.append = function(elem) {
+
+    };
+
+    mp.RasterCanvas.prototype.remove = function(elem) {
+        //this.parent().removeChild(elem);
+    };
+
+    mp.RasterCanvas.prototype.clear = function() {
+        this.context.clearRect(0, 0, this.width, this.height);
+    };
+
+    mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {
+        var id = this.id(), g;
+
+        this.parent().appendChild(
+            this.mk('defs',{},[
+                this.mk('clipPath',{id: id},[
+                    this.mk('rect',{x: x, y:y, 
+                                    width: w, height: h,
+                                    style: style
+                                   },[])
+                ])
+            ]));
+        
+        this.push(g = this.group({'clip-path': 'url(#' + id + ')'}));
+
+        this.context.rect(x,y,w,h);
+        this.context.clip();
+        return g;
+    };
+
+    mp.RasterCanvas.prototype.group = function(style) {
+        var group;
+        style = style || {};
+
+        this.parent().appendChild(
+            group = this.mk('g',
+                            {'clip-path': style['clip-path']}));
+
+        return group;
+    };
+
+    mp.RasterCanvas.prototype.rect = function(x,y,width,height,style) {
+        var rect, fill;
+        style = style || {};
+
+        this.parent().appendChild(
+            rect = this.mk('rect',
+                           {x: x,
+                            y: y,
+                            width: width,
+                            height: height,
+                            onclick: style.onclick,
+                            style: {
+                                'fill': style.fill || 'none',
+                                'fill-opacity': style['fill-opacity'],
+                                'pointer-events': style['pointer-events'],
+                                'stroke':  style.stroke || 'black'}
+                           }));
+
+        var fill = style.fill || 'none';
+
+        this.context.save();  
+        if (fill !== 'none') {
+            this.context.fillStyle = fill;
+            this.context.fillRect(x,y,width,height); 
+        }
+
+        this.context.lineWidth = 1;
+        this.context.strokeStyle = style.stroke || 'black';
+        this.context.rect(x,y,width,height); 
+        this.context.stroke();
+        this.context.restore();
+
+        return rect;
+    };
+
+
+    mp.RasterCanvas.prototype.circle = function(x,y,radius,style) {
+        var circle, fill;
+        style = style || {};
+
+        this.parent().appendChild(
+            circle = this.mk('circle',
+                             {cx: x,
+                              cy: y,
+                              r: radius,
+                              onclick: style.onclick,
+                              style: {
+                                  'fill': style.fill || 'none',
+                                  'stroke':  style.stroke || 'black',
+                                  'pointer-events': style['pointer-events']
+                              }
+                             }));
+
+        this.context.beginPath();
+        this.context.arc(x, y, radius, 0, 2 * Math.PI, false);
+
+        fill = style.fill || 'none';
+        if (fill !== 'none') {
+            this.context.fillStyle = fill;
+            this.context.fill();
+        }
+
+        this.context.lineWidth = 1;
+        this.context.strokeStyle = style.stroke || 'black';
+        this.context.stroke();
+        return circle;
+    };
+
+
+
+    mp.RasterCanvas.prototype.polygon = function(x,y,style) {
+        var polygon, points = '', i, fill;
+
+        for (i = 0; i < x.length; i++) {
+            points += x[i] + ',' + y[i] + ' ';
+        }
+
+        this.parent().appendChild(
+            polygon = this.mk('polygon',
+                              {points: points,
+                               onclick: style.onclick,
+                               style: {fill: style.fill, stroke: style.stroke}
+                              }
+                             ));
+
+        this.context.save();  
+
+        this.context.beginPath();
+
+        this.context.moveTo(x[0], y[0]);
+
+        for (i = 1; i < x.length; i++) {
+            this.context.lineTo(x[i], y[i]);
+        }
+
+        fill = style.fill || 'none';
+        this.context.lineWidth = 0;
+
+        if (fill !== 'none') {
+            this.context.fillStyle = style.fill;
+            this.context.fill();
+        }
+ 
+        this.context.strokeStyle = style.stroke || 'black';
+        this.context.stroke();
+        this.context.restore();
+
+
+        return polygon;
+    };
+
+    mp.RasterCanvas.prototype.textBBox = function(string,style) {
+        var text, FontSize, FontFamily, bbox, metrics;
+
+        style = style || {};
+        FontSize = style.FontSize || 18;
+        FontFamily = style.FontFamily || mp.DEFAULT_FONT;
+
+        this.context.save();          
+        this.context.font = '' + FontSize + 'px ' + FontFamily;
+        metrics = this.context.measureText(string);
+        this.context.restore();
+
+        return {width: metrics.width, height: FontSize};
+    };
+
+    mp.RasterCanvas.prototype.text = function(x,y,string,style) {
+        var text, offseti, offsetj, FontSize, FontFamily, color, HorizontalAlignment, VerticalAlignment,
+        TextAnchor, dy = 0;
+
+        style = style || {};
+        offseti = style.offseti || 0;
+        offsetj = style.offsetj || 0;
+        FontSize = style.FontSize || 18;
+        FontFamily = style.FontFamily || mp.DEFAULT_FONT;
+        color = style.color || 'black';
+        HorizontalAlignment = style.HorizontalAlignment || 'left';
+        VerticalAlignment = style.VerticalAlignment || 'baseline';
+
+
+        this.context.save();  
+        this.context.textAlign = HorizontalAlignment;
+
+        //console.log('offsetj',offsetj,VerticalAlignment);
+        if (HorizontalAlignment === 'left') {
+            TextAnchor = 'start';
+        }
+        else if (HorizontalAlignment === 'center') {
+            TextAnchor = 'middle';
+        }
+        else if (HorizontalAlignment === 'right') {
+            TextAnchor = 'end';
+        }
+        else {
+            console.error(HorizontalAlignment);
+        }
+
+        if (VerticalAlignment === 'top') {
+            dy = FontSize;
+            //dy = this.textBBox(string).height;
+        }
+        else if (VerticalAlignment === 'middle') {
+            dy = FontSize/2-1.5;
+            //dy = this.textBBox(string).height/2;
+        }
+        else if (VerticalAlignment === 'baseline') {
+            dy = 0;
+        }
+
+        this.parent().appendChild(
+            text = this.mk('text',
+                           {'x': x+offseti,
+                            'y': y+offsetj,
+                            'style': {'font-family': FontFamily,
+                                      'font-size': FontSize},
+                            'text-anchor': TextAnchor,
+                            'dy': dy,
+                            'fill': color},
+                           [string] ));
+
+
+        this.context.font = '' + FontSize + 'px ' + FontFamily;
+        this.context.fillText(string, x+offseti, y+offsetj+dy);
+        this.context.restore();
+
+        return text;
+
+    };
+
+
+    mp.RasterCanvas.prototype.line = function(x,y,style) {
+        var polyline, points = '', i, linespec, dasharray;
+
+        linespec = style.linespec || '-';
+        this.context.save();  
+        this.context.beginPath();
+
+        if (!this.context.setLineDash) {
+            this.context.setLineDash = function() {};
+        }
+
+        if (linespec === 'none') {
+            return;
+        }
+
+        dasharray = mp.dasharray(linespec);
+        this.context.setLineDash(dasharray);
+
+        for (i = 0; i < x.length; i++) {
+            points += x[i] + ',' + y[i] + ' ';
+        }
+
+        this.parent().appendChild(
+            polyline = this.mk('polyline',
+                               {points: points,
+                                onclick: style.onclick,
+                                style: {'fill': 'none',
+                                        'stroke': (style.color || 'black'),
+                                        'stroke-width': (style.linewidth || 1),
+                                        'stroke-dasharray': dasharray.map(function(x) { return x.toString(); }).join()
+                                       }
+                               }
+                              ));
+
+
+
+
+        this.context.moveTo(x[0], y[0]);
+
+        for (i = 1; i < x.length; i++) {
+            this.context.lineTo(x[i], y[i]);
+        }
+
+        this.context.lineWidth = style.linewidth || 1;
+        this.context.strokeStyle = style.color || 'black';
+        this.context.stroke();
+        this.context.restore();
+
+        return polyline;
+
+    };
+
+    mp.RasterCanvas.prototype.serialize = function() {
+        // http://stackoverflow.com/questions/12796513/html5-canvas-to-png-file
+        var dataURL;
+
+        dataURL = this.canvas.toDataURL("image/png");
+
+        return dataURL;
+
+    };
+
+
 
     mp.isArray = function(arr) {
         return Object.prototype.toString.call(arr) === '[object Array]';
@@ -2364,6 +2727,23 @@ var matplot = (function() {
                     }}
                    );
 
+        this.outerDIV.appendChild(            
+            this.zoomrect = mp.html('div',{
+                'class': 'matplot-zoomrect',
+                'style': {
+                    'position': 'absolute',
+//                    'display': 'none',
+                    'display': 'block',
+                    'width': '100px',
+                    'height': '100px',
+                    'border': '1px solid blue',
+                    'left': '100px',
+                    'top': '100px'}}));
+
+        this.canvas = new mp.SVGCanvas(this.outerDIV,width,height);
+        //this.canvas = new mp.RasterCanvas(this.outerDIV,width,height);
+
+
         this.outerDIV.appendChild(
             this.contextmenu = mp.html('div',{
                 'class': 'matplot-contextmenu',
@@ -2399,19 +2779,23 @@ var matplot = (function() {
                                            ])
                                        ]));
 
+            
+
+
         this.container.appendChild(this.outerDIV);
 
-        this.canvas = new mp.SVGCanvas(this.outerDIV,width,height);
         this._axes = [];
 
 
-        window.addWheelListener(this.canvas.svg, 
-                                function(ev) { 
-                                    if (!that.zoom(ev.deltaY,ev.pageX,ev.pageY)) {
-                                        ev.preventDefault(); 
-                                    }
-                                }                    
-                               );
+        if (this.canvas.elem) {
+            window.addWheelListener(this.canvas.elem, 
+                                    function(ev) { 
+                                        if (!that.zoom(ev.deltaY,ev.pageX,ev.pageY)) {
+                                            ev.preventDefault(); 
+                                        }
+                                    }                    
+                                   );
+        }
 
         function getcoord(ev) {
             var i,j, ax, v;
@@ -2437,10 +2821,11 @@ var matplot = (function() {
         this.dragMode = 'panning';
         this.dragMode = 'zooming';
 
-        this.canvas.svg.addEventListener('mousedown',function(ev) {
-            var ax;
+        this.canvas.elem.addEventListener('mousedown',function(ev) {
+        //this.outerDIV.addEventListener('mousedown',function(ev) {
+            var ax, p1;
 
-            //console.log('mousedown ',ev);
+            console.log('mousedown ',ev);
 
             // dismiss context menu if shown
             if (that.contextmenu.style.display === 'block') {
@@ -2455,10 +2840,19 @@ var matplot = (function() {
                 that.po = getcoordp(that.md); // origin
                 ax = that._axes[0];
                 that.orig_xlim = ax.xLim();
-            }
+                console.log('that.md',that.md);
+
+                p1 = getcoord(that.md);
+                that.zoomrect.style.display = 'block';
+                that.zoomrect.style.left = p1[0] + 'px';
+                that.zoomrect.style.top = p1[1] + 'px';
+                that.zoomrect.style.width = '0px';
+                that.zoomrect.style.height = '0px';                
+            }            
         });
 
-        this.canvas.svg.addEventListener('mouseup',function(ev) {
+        //this.canvas.elem.addEventListener('mouseup',function(ev) {
+        this.outerDIV.addEventListener('mouseup',function(ev) {
             var p1, p2, ax;
 
             // remove zoom rectangle
@@ -2466,6 +2860,11 @@ var matplot = (function() {
                 that.canvas.remove(that.dragRect);
                 that.dragRect = null;
             }
+
+            if (that.zoomrect.style.display === 'block') {
+                that.zoomrect.style.display = 'none';
+            }
+            
 
             if (that.md !== null && that.md2 !== null) {
                 p1 = getcoordp(that.md);
@@ -2483,7 +2882,8 @@ var matplot = (function() {
             that.md2 = null;
         },false); // tigger event in bubbling phase (so that it might be cancled 
 
-        this.canvas.svg.addEventListener('mousemove',function(ev) {
+        //this.canvas.elem.addEventListener('mousemove',function(ev) {
+        this.outerDIV.addEventListener('mousemove',function(ev) {
             var p1, p2, x, y, h, w, ax, lim, r, po, xs;
 
             //console.log('mousemove ',ev);
@@ -2509,7 +2909,23 @@ var matplot = (function() {
                     h = Math.abs(p2[1]-p1[1]);
 
                     //console.log('mousemove ',x,y,w,h);
-                    that.dragRect = that.canvas.rect(x,y,w,h);
+                    //that.dragRect = that.canvas.rect(x,y,w,h);
+
+                    // in pixels of Canvas element
+                    p1 = getcoord(that.md);
+                    p2 = getcoord(that.md2);
+                    x = Math.min(p1[0],p2[0]);
+                    w = Math.abs(p2[0]-p1[0]);
+                    
+                    y = Math.min(p1[1],p2[1]);
+                    h = Math.abs(p2[1]-p1[1]);
+                    
+
+                    that.zoomrect.style.left = x + 'px';
+                    that.zoomrect.style.top = y + 'px';
+                    that.zoomrect.style.width = w + 'px';
+                    that.zoomrect.style.height = h + 'px';
+
                 }
                 else {
                     po = getcoordp(that.md); // origin
@@ -2527,7 +2943,7 @@ var matplot = (function() {
         });
 
         //this.outerDIV.addEventListener('contextmenu',function(ev) {
-        this.canvas.svg.addEventListener('contextmenu',function(ev) {
+        this.canvas.elem.addEventListener('contextmenu',function(ev) {
             var i,j;
             i = ev.pageX - that.container.offsetLeft;
             j = ev.pageY - that.container.offsetTop;
