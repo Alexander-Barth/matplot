@@ -2732,11 +2732,10 @@ var matplot = (function() {
                 'class': 'matplot-zoomrect',
                 'style': {
                     'position': 'absolute',
-//                    'display': 'none',
-                    'display': 'block',
+                    'display': 'none',
                     'width': '100px',
                     'height': '100px',
-                    'border': '1px solid blue',
+                    'border': '1px solid black',
                     'left': '100px',
                     'top': '100px'}}));
 
@@ -2817,7 +2816,6 @@ var matplot = (function() {
 
         this.md = null;
         this.md2 = null;
-        this.dragRect = null;
         this.dragMode = 'panning';
         this.dragMode = 'zooming';
 
@@ -2856,11 +2854,6 @@ var matplot = (function() {
             var p1, p2, ax;
 
             // remove zoom rectangle
-            if (that.dragRect) {
-                that.canvas.remove(that.dragRect);
-                that.dragRect = null;
-            }
-
             if (that.zoomrect.style.display === 'block') {
                 that.zoomrect.style.display = 'none';
             }
@@ -2896,11 +2889,6 @@ var matplot = (function() {
 
 
                 if (that.dragMode === 'zooming') {
-                    if (that.dragRect) {
-                        that.canvas.remove(that.dragRect);
-                        that.dragRect = null;
-                    }
-
                     //console.log('mousemove ',getcoord(ev),getcoord(that.md));
                     x = Math.min(p1[0],p2[0]);
                     w = Math.abs(p2[0]-p1[0]);
