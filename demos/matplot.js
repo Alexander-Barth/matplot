@@ -487,11 +487,11 @@ var matplot = (function() {
                 ])
             ]));
         
-        this.push(g = this.group({'clip-path': 'url(#' + id + ')'}));
+        this.push(g = this._group({'clip-path': 'url(#' + id + ')'}));
         return g;
     };
 
-    mp.SVGCanvas.prototype.group = function(style) {
+    mp.SVGCanvas.prototype._group = function(style) {
         var group;
         style = style || {};
 
@@ -633,6 +633,7 @@ var matplot = (function() {
                                       'font-size': FontSize},
                             'text-anchor': TextAnchor,
                             'dy': dy,
+                            'onclick': style.onclick,
                             'fill': color},
                            [string] ));
         return text;
@@ -744,12 +745,10 @@ var matplot = (function() {
 
     mp.RasterCanvas.prototype.push = function (elem) {
         this.context.save();  
-        this.parentStack.push(elem);
     };
 
     mp.RasterCanvas.prototype.pop = function () {
         this.context.restore();
-        return this.parentStack.pop();
     };
 
     mp.RasterCanvas.prototype.parent = function () {
@@ -789,58 +788,19 @@ var matplot = (function() {
         this.context.clearRect(0, 0, this.width, this.height);
     };
 
-    mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {
-        var id = this.id(), g;
-
-        this.parent().appendChild(
-            this.mk('defs',{},[
-                this.mk('clipPath',{id: id},[
-                    this.mk('rect',{x: x, y:y, 
-                                    width: w, height: h,
-                                    style: style
-                                   },[])
-                ])
-            ]));
-        
-        this.push(g = this.group({'clip-path': 'url(#' + id + ')'}));
-
+    mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {        
+        this.push();
         this.context.rect(x,y,w,h);
         this.context.clip();
-        return g;
-    };
-
-    mp.RasterCanvas.prototype.group = function(style) {
-        var group;
-        style = style || {};
-
-        this.parent().appendChild(
-            group = this.mk('g',
-                            {'clip-path': style['clip-path']}));
-
-        return group;
     };
 
     mp.RasterCanvas.prototype.rect = function(x,y,width,height,style) {
         var rect, fill;
         style = style || {};
+        fill = style.fill || 'none';
 
-        this.parent().appendChild(
-            rect = this.mk('rect',
-                           {x: x,
-                            y: y,
-                            width: width,
-                            height: height,
-                            onclick: style.onclick,
-                            style: {
-                                'fill': style.fill || 'none',
-                                'fill-opacity': style['fill-opacity'],
-                                'pointer-events': style['pointer-events'],
-                                'stroke':  style.stroke || 'black'}
-                           }));
-
-        var fill = style.fill || 'none';
-
-        this.context.save();  
+        this.context.save();
+  
         if (fill !== 'none') {
             this.context.fillStyle = fill;
             this.context.fillRect(x,y,width,height); 
@@ -855,27 +815,12 @@ var matplot = (function() {
         if (style.onclick) {
             this.interactive.push([x,x+width,y,y+height,style.onclick]);
         }
-
-        return rect;
     };
 
 
     mp.RasterCanvas.prototype.circle = function(x,y,radius,style) {
         var circle, fill;
         style = style || {};
-
-        this.parent().appendChild(
-            circle = this.mk('circle',
-                             {cx: x,
-                              cy: y,
-                              r: radius,
-                              onclick: style.onclick,
-                              style: {
-                                  'fill': style.fill || 'none',
-                                  'stroke':  style.stroke || 'black',
-                                  'pointer-events': style['pointer-events']
-                              }
-                             }));
 
         this.context.beginPath();
         this.context.arc(x, y, radius, 0, 2 * Math.PI, false);
@@ -889,7 +834,12 @@ var matplot = (function() {
         this.context.lineWidth = 1;
         this.context.strokeStyle = style.stroke || 'black';
         this.context.stroke();
-        return circle;
+
+        if (style.onclick) {
+            this.interactive.push([x-radius/2,x+radius/2,
+                                   y-radius/2,y+radius/2,style.onclick]);
+        }
+
     };
 
 
@@ -897,22 +847,8 @@ var matplot = (function() {
     mp.RasterCanvas.prototype.polygon = function(x,y,style) {
         var polygon, points = '', i, fill;
 
-        for (i = 0; i < x.length; i++) {
-            points += x[i] + ',' + y[i] + ' ';
-        }
-
-        this.parent().appendChild(
-            polygon = this.mk('polygon',
-                              {points: points,
-                               onclick: style.onclick,
-                               style: {fill: style.fill, stroke: style.stroke}
-                              }
-                             ));
-
         this.context.save();  
-
         this.context.beginPath();
-
         this.context.moveTo(x[0], y[0]);
 
         for (i = 1; i < x.length; i++) {
@@ -931,8 +867,15 @@ var matplot = (function() {
         this.context.stroke();
         this.context.restore();
 
+        if (style.onclick) {
+/*
+            this.interactive.push([x-radius/2,x+radius/2,
+                                   y-radius/2,y+radius/2,style.onclick]);
 
-        return polygon;
+*/
+        }
+
+
     };
 
     mp.RasterCanvas.prototype.textBBox = function(string,style) {
@@ -967,20 +910,6 @@ var matplot = (function() {
         this.context.save();  
         this.context.textAlign = HorizontalAlignment;
 
-        //console.log('offsetj',offsetj,VerticalAlignment);
-        if (HorizontalAlignment === 'left') {
-            TextAnchor = 'start';
-        }
-        else if (HorizontalAlignment === 'center') {
-            TextAnchor = 'middle';
-        }
-        else if (HorizontalAlignment === 'right') {
-            TextAnchor = 'end';
-        }
-        else {
-            console.error(HorizontalAlignment);
-        }
-
         if (VerticalAlignment === 'top') {
             dy = FontSize;
             //dy = this.textBBox(string).height;
@@ -993,29 +922,14 @@ var matplot = (function() {
             dy = 0;
         }
 
-        this.parent().appendChild(
-            text = this.mk('text',
-                           {'x': x+offseti,
-                            'y': y+offsetj,
-                            'style': {'font-family': FontFamily,
-                                      'font-size': FontSize},
-                            'text-anchor': TextAnchor,
-                            'dy': dy,
-                            'fill': color},
-                           [string] ));
-
-
         this.context.font = '' + FontSize + 'px ' + FontFamily;
         this.context.fillText(string, x+offseti, y+offsetj+dy);
         this.context.restore();
-
-        return text;
-
     };
 
 
     mp.RasterCanvas.prototype.line = function(x,y,style) {
-        var polyline, points = '', i, linespec, dasharray;
+        var i, linespec, dasharray;
 
         linespec = style.linespec || '-';
         this.context.save();  
@@ -1031,26 +945,6 @@ var matplot = (function() {
 
         dasharray = mp.dasharray(linespec);
         this.context.setLineDash(dasharray);
-
-        for (i = 0; i < x.length; i++) {
-            points += x[i] + ',' + y[i] + ' ';
-        }
-
-        this.parent().appendChild(
-            polyline = this.mk('polyline',
-                               {points: points,
-                                onclick: style.onclick,
-                                style: {'fill': 'none',
-                                        'stroke': (style.color || 'black'),
-                                        'stroke-width': (style.linewidth || 1),
-                                        'stroke-dasharray': dasharray.map(function(x) { return x.toString(); }).join()
-                                       }
-                               }
-                              ));
-
-
-
-
         this.context.moveTo(x[0], y[0]);
 
         for (i = 1; i < x.length; i++) {
@@ -1062,7 +956,7 @@ var matplot = (function() {
         this.context.stroke();
         this.context.restore();
 
-        return polyline;
+        // check on click
 
     };
 
@@ -2537,18 +2431,21 @@ var matplot = (function() {
         w = bbox.width + 2*padding;
         h = bbox.height + 2*padding;
 
-        an.rect = this.fig.canvas.rect(i,j,w,h,{fill: style.fill || '#ffc'});
+        an.rect = this.fig.canvas.rect(i,j,w,h,
+                                       {fill: style.fill || '#ffc',
+                                        onclick: function(event) {
+                                            that.removeAnnotation(an);
+                                        }
+                                       });
 
         i += padding;
         j += padding;
 
         an.text = this.fig.canvas.text(i,j,text,
-                                       {VerticalAlignment: 'top'});
-
-        an.text.onclick = an.rect.onclick = function(event) {
-            that.removeAnnotation(an);
-        };
-
+                                       {VerticalAlignment: 'top',
+                                        onclick: function(event) {
+                                            that.removeAnnotation(an);
+                                        }});
         return an;
     };
 
@@ -2735,8 +2632,13 @@ var matplot = (function() {
     // this class represent a figure on a screen
     // should not contain SVG specific stuff
 
-    mp.Figure = function Figure(id,width,height) {
-        var that = this;
+    mp.Figure = function Figure(id,width,height,options) {
+        var that = this, renderer;
+        options = options || {};
+
+        // either mp.SVGCanvas or mp.RasterCanvas
+        renderer = (options.renderer !== undefined ? options.renderer : mp.SVGCanvas);
+
         this.container = document.getElementById(id);
 
         if (!mp.supportsSVG()) {
@@ -2776,8 +2678,7 @@ var matplot = (function() {
                     'top': '0px'}}));
 
         // choose back-end
-        this.canvas = new mp.SVGCanvas(this.outerDIV,width,height);
-        //this.canvas = new mp.RasterCanvas(this.outerDIV,width,height);
+        this.canvas = new renderer(this.outerDIV,width,height);
 
         this.outerDIV.appendChild(
             this.contextmenu = mp.html('div',{

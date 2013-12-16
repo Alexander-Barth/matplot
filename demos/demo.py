@@ -107,6 +107,43 @@ ax.colorbar();
 fig.draw();
 '''},
 
+# DEMO 1b
+
+    {'title': 'Plot (Canvas)',
+     'description': 'Simple 1D line plots with different markers, anotation and legend (Canvas)',
+     'name': 'plot_canvas',
+     'javascript': '''
+ var i,x=[],y=[],z=[];
+
+ for (i=0; i < 49; i++) {
+   x[i] = i+3;
+   y[i] = Math.sin(i/5);
+   z[i] = Math.sin((i+3)/5);
+ }
+ 
+// make a figure of size 700 x 500 pixels
+fig = new matplot.Figure("plot",700,500,{renderer: matplot.RasterCanvas});
+ax = fig.axes();
+
+// simple plot using indices as x-axis and values in parameter z as y-axis
+// The curve is draw with the given color. The label will be used later in the legend
+ax.plot(z,{color: 'red', label: 'foo'});
+      
+// define marker and marker size
+ax.plot(y,{color: 'blue', marker: 'o', markersize: 5, label: 'bar'});
+ 
+// make a dotted line with linespec
+ax.plot(x,y,{color: 'green', marker: 's', linewidth: 2, label: 'baz'});
+
+// add legend
+ax.legend();
+
+// add annotation at the location x=20, y=0.6 and z=0 with the given text
+ax.annotation(20,0.6,0,'annotation');
+
+// draw everything
+fig.draw();
+'''},
 
 #############################
     {'title': 'patch',
