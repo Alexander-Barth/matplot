@@ -1114,6 +1114,17 @@ var matplot = (function() {
         }
     };
 
+    // transform a multidimensional array to a flat vector
+    mp.flatten = function flatten(arr) {
+        var v = [];
+
+        mp.arrayMap(arr,function(e) {
+            v.push(e);
+        });
+
+        return v;
+    };
+
     // minimum and maximum of arr
     // returns [NaN,NaN] for empty array
 
@@ -1224,9 +1235,100 @@ var matplot = (function() {
     };
 
     mp.Line.prototype.draw = function(axis) {
-        var i,j;
+        var i,j
 
         axis.drawLine(this.x,this.y,this.z,this.style);
+    };
+
+
+
+
+    // Quiver object
+
+    mp.Quiver = function Quiver(x,y,z,u,v,w,c,style) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.u = u;
+        this.v = v;
+        this.w = w;
+        this.c = c;
+        this.style = style || {};
+    };
+
+    mp.Quiver.prototype.lim = function(what) {
+        var i, min, max, tmp = this[what], scale;
+
+        if (what === 'c') {
+            if (mp.isArray(tmp)) {
+                return mp.dataRange(tmp);
+            }
+            
+            return [NaN,NaN];
+        }
+
+        scale = (this.style.scale === undefined ? 1 : this.style.scale);
+
+        if (what === 'x') {
+            tmp = [tmp,numeric.add(tmp,mp.prod(scale,this.u))];
+        }
+
+        if (what === 'y') {
+            tmp = [tmp,numeric.add(tmp,mp.prod(scale,this.v))];
+        }
+
+        if (what === 'z') {
+            tmp = [tmp,numeric.add(tmp,mp.prod(scale,this.w))];
+        }
+
+        return mp.dataRange(tmp);
+    };
+
+    mp.Quiver.prototype.draw = function(axis) {
+        var i,xv,yv,zv,uv,vv,scale, a, b, x,y,z, u,v,w, style, key;
+
+        scale = (this.style.scale === undefined ? 1 : this.style.scale);
+        a = (this.style.relLen === undefined ? 0.7 : this.style.relLen);
+        b = (this.style.relOpen === undefined ? 0.2 : this.style.relOpen);
+
+        // make a copy
+        style = {};
+        for (key in this.style) {
+            if (this.style.hasOwnProperty(key)) {
+                style[key] = this.style[key];
+            }
+        }
+
+        for (i=0; i<this.x.length; i++) {
+            x = this.x[i];
+            y = this.y[i];
+            z = this.z[i];
+            u = scale*this.u[i];
+            v = scale*this.v[i];
+            w = scale*this.w[i];
+
+            if (this.style.color === undefined) {
+                if (mp.isArray(this.c)) {
+                    style.color = axis.cmap.get(this.c[i]);
+                }
+            }
+
+
+            // shaft of the arrow
+            xv = [x, x+u];
+            yv = [y, y+v];
+            zv = [z, z+w];            
+            axis.drawLine(xv,yv,zv,style);
+            
+            // head of the arrow            
+            // ideally take aspect ratio into account
+            // the arrow head parallel to the z=0 plane
+
+            xv = [x + a*u - b*v, xv[1], x + a*u + b*v];
+            yv = [y + a*v + b*u, yv[1], y + a*v - b*u];
+            zv = [z + a*w      , zv[1], z + a*w      ];
+            axis.drawLine(xv,yv,zv,style);
+        }
     };
 
     mp.ColorMap = function ColorMap(cLim,type) {
@@ -1455,7 +1557,6 @@ var matplot = (function() {
     installGetterSetterMode('CameraUpVector');
 
     // makes a product of all matrices provided as arguments
-
     mp.prod = function (M) {
         var i;
 
@@ -1804,6 +1905,37 @@ var matplot = (function() {
 
         this.children.push(new mp.Patch(x,y,z,c));
     };
+
+    mp.Axis.prototype.quiver = function(x,y,u,v,style) {
+        var z, w, color;
+        style = style || {};
+        x = mp.flatten(x);
+        y = mp.flatten(y);
+        u = mp.flatten(u);
+        v = mp.flatten(v);
+
+        z = [];
+        for (i=0; i<x.length; i++) {
+            z[i] = 0;
+        }
+        w = z;
+
+        color = style.color; // might be undefined, if which it is not used
+        if (color === 'norm') {
+            // color == sqrt(u^2 + v^2 + w^2);
+            color = 
+                numeric.sqrt(
+                    numeric.add(
+                        numeric.pow(u,2),
+                        numeric.pow(v,2),
+                        numeric.pow(w,2)));
+
+            style.color = undefined;
+        }
+
+        this.children.push(new mp.Quiver(x,y,z,u,v,z,color,style));
+    };
+
 
     mp.Axis.prototype.is2dim = function() {
         var _zrange = this._zrange;
