@@ -747,17 +747,6 @@ var matplot = (function() {
                 height: height
             }));
 
-/*
-        this.container.appendChild(
-            this.svg = this.mk('svg',{
-                version: '1.1',
-                baseProfile: 'basic',
-                //xmlns: this.xmlns,
-                width: width, 
-                height: height
-            },
-                               [this.axis = this.mk('g',{})]));
-*/
 
         // event handler will be attached to this.elem
         this.elem = this.canvas;
@@ -790,41 +779,8 @@ var matplot = (function() {
         return 'matplot' + (this.idconter++);
     };
 
-    // add a new layer and make it current
-    mp.RasterCanvas.prototype.push = function (layer) {
-        //this.context.save();  
-        this.parentStack.push(layer);
-        this.context = layer.context;
-        this.interactive = layer.interactive;
-    };
-
-    // use the previous layer as the current one
-    mp.RasterCanvas.prototype.pop = function () {
-        //this.context.restore();
-        this.parentStack.pop();
-        this.context = this.parentStack[this.parentStack.length-1].context;
-        this.interactive = this.parentStack[this.parentStack.length-1].interactive;
-    };
-
-    mp.RasterCanvas.prototype.parent = function () {
-        return this.parentStack[this.parentStack.length-1];
-    };
-
-    mp.RasterCanvas.prototype.mk = function mk(tag,attribs,children) {
-        return mp.mk(this.xmlns,tag,attribs,children);
-    };
-
-    mp.RasterCanvas.prototype.append = function(elem) {
-
-    };
-
-    mp.RasterCanvas.prototype.remove = function(elem) {
-        //this.parent().removeChild(elem);
-    };
-
     mp.RasterCanvas.prototype.processEvent = function (ev) {
         var i, j, elem, elements;
-
 
         for (j = this.parentStack.length-1; j >= 0; j--) {
             elements = this.parentStack[j].interactive;
@@ -876,7 +832,6 @@ var matplot = (function() {
                   interactive:  []
                  };
 
-         //this.push(layer);
          this.parentStack.push(layer);
          this.context = layer.context;
          this.interactive = layer.interactive;
