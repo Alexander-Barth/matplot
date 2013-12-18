@@ -2508,6 +2508,10 @@ var matplot = (function() {
 
         current = this.fig.canvas.currentLayer();
         layer = this.fig.canvas.newLayer();
+
+        // set clip rectangle
+        this.fig.canvas.clipRect(this.ul[0],this.ul[1],this.lr[0]-this.ul[0],this.lr[1]-this.ul[1]);
+
         an.layer = layer;
 
         an.rect = this.fig.canvas.rect(i,j,w,h,
@@ -2522,6 +2526,9 @@ var matplot = (function() {
                              {VerticalAlignment: 'top',
                               onclick: style.onclick
                               });
+
+        // exit clip rectangle
+        this.fig.canvas.exitClipRect();
 
         // use the previous layer as the current one
         //this.fig.canvas.pop();
@@ -2574,9 +2581,6 @@ var matplot = (function() {
 
             an = this.drawAnnotation(x,y,z,text,{onclick: onclick});
             an.elem = elem;
-/*            an.text.onclick = an.rect.onclick = function(event) {
-                that.toggleAnnotation(event,elem,x,y,z);
-            };*/
 
             this.annotatedElements.push(an);
         }
