@@ -422,6 +422,7 @@ var matplot = (function() {
         this.xmlns = "http://www.w3.org/2000/svg";
         this.width = width;
         this.height = height;
+        this.layers = [];
 
         this.container = container;
         this.container.appendChild(
@@ -508,10 +509,7 @@ var matplot = (function() {
             this.svg.removeChild(elem);
         }    
 
-        this.axis = this.mk('g',{});
-        this.svg.appendChild(this.axis);
-        this.layers = [{groups: [this.axis]}];
-        this._currentLayer = this.layers[0];
+        this.newLayer();
     };
 
     mp.SVGCanvas.prototype.clipRect = function(x,y,w,h,style) {
@@ -809,24 +807,6 @@ var matplot = (function() {
         } 
 
         this.newLayer();
-/*   
-        this.canvas = mp.html('canvas',{
-            width: this.width, 
-            height: this.height
-        });
-
-        this.canvasLayers.appendChild(this.canvas);
-        this.context = this.canvas.getContext('2d');
-        // list of interactive elements
-        this.interactive = [];
-
-        this.parentStack = [{canvas: this.canvas, 
-                             context: this.context,
-                             interactive:  this.interactive
-                            }];        
-*/
-
-        //this.context.clearRect(0, 0, this.width, this.height);
     };
 
     mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {        
