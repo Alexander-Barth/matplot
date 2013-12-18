@@ -1,0 +1,123 @@
+
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <meta name="author" content="Alexander Barth">
+
+   <title>matplot: 3D scatter</title>
+   <link href="style.css" rel="stylesheet" type="text/css" />
+   <link href="prettify/prettify.css" type="text/css" rel="stylesheet" />
+   <script type="text/javascript" src="prettify/prettify.js"></script>
+   <script type="text/javascript" src="numeric-1.2.3.js"></script>
+   <link href="../matplot.css" rel="stylesheet" type="text/css" />
+   <script type="text/javascript" src="matplot.js"></script>
+
+
+   <script type="text/javascript">
+function init() {      
+  
+
+var i, j, k, x = [],y = [], z = [], c = [], r = [];
+
+
+// generate some data to plot
+for (i=0; i < 4; i++) {
+  x[i] = [];
+  y[i] = [];
+  z[i] = [];
+  c[i] = [];
+
+  for (j=0; j < 20; j++) {
+    x[i][j] = [];
+    y[i][j] = [];
+    z[i][j] = [];
+    c[i][j] = [];
+                
+    for (k=0; k < 10; k++) {
+      r = 20 + 5*i;
+      phi = 2*Math.PI * j/19;
+      theta = Math.PI * k/9;
+
+      phi = 2*Math.PI * j/9;
+      theta = Math.PI * k/4;
+
+      x[i][j][k] = r * Math.sin(theta) * Math.cos(phi);
+      y[i][j][k] = r * Math.sin(theta) * Math.sin(phi);
+      z[i][j][k] = r * Math.cos(theta);  
+      c[i][j][k] = r;
+    }
+  }
+}
+
+
+fig = new matplot.Figure("plot",700,500);
+ax = fig.axes();
+ax.scatter3(x,y,z,5,c);
+ax.DataAspectRatio([1,1,1]);
+ax.colorbar();
+
+ax.CameraPosition([100,  100,   40]);
+
+fig.draw();
+
+}
+
+addEventListener('load', function (event) { prettyPrint() }, false);
+
+    </script>
+ </head>
+    <body onload="init()">
+    <h1>matplot: 3D scatter</h1>
+    <p>3D scatter plot (function scatter3)</p>
+    <div id="plot"></div>
+    <h2>Code:</h2>
+    <pre class=prettyprint>
+
+
+var i, j, k, x = [],y = [], z = [], c = [], r = [];
+
+
+// generate some data to plot
+for (i=0; i < 4; i++) {
+  x[i] = [];
+  y[i] = [];
+  z[i] = [];
+  c[i] = [];
+
+  for (j=0; j < 20; j++) {
+    x[i][j] = [];
+    y[i][j] = [];
+    z[i][j] = [];
+    c[i][j] = [];
+                
+    for (k=0; k < 10; k++) {
+      r = 20 + 5*i;
+      phi = 2*Math.PI * j/19;
+      theta = Math.PI * k/9;
+
+      phi = 2*Math.PI * j/9;
+      theta = Math.PI * k/4;
+
+      x[i][j][k] = r * Math.sin(theta) * Math.cos(phi);
+      y[i][j][k] = r * Math.sin(theta) * Math.sin(phi);
+      z[i][j][k] = r * Math.cos(theta);  
+      c[i][j][k] = r;
+    }
+  }
+}
+
+
+fig = new matplot.Figure("plot",700,500);
+ax = fig.axes();
+ax.scatter3(x,y,z,5,c);
+ax.DataAspectRatio([1,1,1]);
+ax.colorbar();
+
+ax.CameraPosition([100,  100,   40]);
+
+fig.draw();
+
+    </pre>    
+  </body>
+</html>

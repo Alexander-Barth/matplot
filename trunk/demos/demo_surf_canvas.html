@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <meta name="author" content="Alexander Barth">
+
+   <title>matplot: Surface plot</title>
+   <link href="style.css" rel="stylesheet" type="text/css" />
+   <link href="prettify/prettify.css" type="text/css" rel="stylesheet" />
+   <script type="text/javascript" src="prettify/prettify.js"></script>
+   <script type="text/javascript" src="numeric-1.2.3.js"></script>
+   <link href="../matplot.css" rel="stylesheet" type="text/css" />
+   <script type="text/javascript" src="matplot.js"></script>
+
+
+   <script type="text/javascript">
+function init() {      
+  
+// load the peaks sample data
+peaks = matplot.peaks();
+
+// make a figure of size 700 x 500 pixels
+fig = new matplot.Figure("plot",700,500);
+
+// add axis to the figure
+ax = fig.axes();
+
+// pseudo color plot
+ax.surf(peaks.x,peaks.y,peaks.z);
+
+//ax.CameraPosition([27.394,  35.701,   25.981]);
+
+// add color-bar
+ax.colorbar();
+
+// draw everything
+fig.draw();
+
+}
+
+addEventListener('load', function (event) { prettyPrint() }, false);
+
+    </script>
+ </head>
+    <body onload="init()">
+    <h1>matplot: Surface plot</h1>
+    <p>3D pseudo color plot (function surf)</p>
+    <div id="plot"></div>
+    <h2>Code:</h2>
+    <pre class=prettyprint>
+
+// load the peaks sample data
+peaks = matplot.peaks();
+
+// make a figure of size 700 x 500 pixels
+fig = new matplot.Figure("plot",700,500);
+
+// add axis to the figure
+ax = fig.axes();
+
+// pseudo color plot
+ax.surf(peaks.x,peaks.y,peaks.z);
+
+//ax.CameraPosition([27.394,  35.701,   25.981]);
+
+// add color-bar
+ax.colorbar();
+
+// draw everything
+fig.draw();
+
+    </pre>    
+  </body>
+</html>
