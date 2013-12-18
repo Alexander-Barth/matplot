@@ -433,7 +433,7 @@ var matplot = (function() {
                 height: height
             }));
 
-        // event handler will be attached to this.elem
+        // some event handler will be attached to this.elem
         this.elem = this.svg;
 
         this.clear();
@@ -751,28 +751,20 @@ var matplot = (function() {
 
 
     mp.RasterCanvas = function RasterCanvas(container,width,height) {
+        this.container = container;
         this.width = width;
         this.height = height;
+        this.parentStack = [];
 
-        this.container = container;
         this.container.appendChild(
-            this.canvas = mp.mk('','canvas',{
-                width: width, 
-                height: height
-            }));
+            this.canvasLayers = mp.html('div', { style: { 
+                width: width + 'px',
+                height: height + 'px'
+            }}));
 
-
-        // event handler will be attached to this.elem
-        this.elem = this.canvas;
-        this.context = this.canvas.getContext('2d');
-        this.idconter = 0;
-        // list of interactive elements
-        this.interactive = [];
-
-        this.parentStack = [{canvas: this.canvas, 
-                             context: this.context,
-                             interactive:  this.interactive
-                            }];        
+        // some event handler will be attached to this.elem
+        this.elem = this.canvasLayers;
+        this.clear();        
 
         var that = this;
         //this.elem.addEventListener('mousedown',function(ev) {
@@ -789,10 +781,6 @@ var matplot = (function() {
     };
 
     
-    mp.RasterCanvas.prototype.id = function () {
-        return 'matplot' + (this.idconter++);
-    };
-
     mp.RasterCanvas.prototype.processEvent = function (ev) {
         var i, j, elem, elements;
 
@@ -814,7 +802,31 @@ var matplot = (function() {
     };
 
     mp.RasterCanvas.prototype.clear = function() {
-        this.context.clearRect(0, 0, this.width, this.height);
+        var elem;
+
+        while (elem = this.canvasLayers.firstChild) {
+            this.canvasLayers.removeChild(elem);
+        } 
+
+        this.newLayer();
+/*   
+        this.canvas = mp.html('canvas',{
+            width: this.width, 
+            height: this.height
+        });
+
+        this.canvasLayers.appendChild(this.canvas);
+        this.context = this.canvas.getContext('2d');
+        // list of interactive elements
+        this.interactive = [];
+
+        this.parentStack = [{canvas: this.canvas, 
+                             context: this.context,
+                             interactive:  this.interactive
+                            }];        
+*/
+
+        //this.context.clearRect(0, 0, this.width, this.height);
     };
 
     mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {        
@@ -829,17 +841,19 @@ var matplot = (function() {
 
     // create a new layer and make it current
     mp.RasterCanvas.prototype.newLayer = function() {
-         var layer = {}, canvas, parent;
+        var layer = {}, canvas, parent;
 
-        this.container.appendChild(
-            canvas = mp.mk('','canvas',{
-                width: this.canvas.width, 
-                height: this.canvas.height,
+        canvas = mp.html('canvas',{
+                width: this.width, 
+                height: this.height,
                 style: {position: 'absolute',
                         top: '0px',
                         left: '0px'
                        }                
-            }));
+        });
+
+
+        this.canvasLayers.appendChild(canvas);
 
          layer = {canvas: canvas, 
                   context: canvas.getContext('2d'),
@@ -860,7 +874,7 @@ var matplot = (function() {
              console.error('cannot remove current layer');
          }
 
-         this.container.removeChild(layer.canvas);
+         this.canvasLayers.removeChild(layer.canvas);
          this.parentStack = this.parentStack.filter(function(_) { 
              return _.context !== layer.context; });
     };
@@ -1047,7 +1061,7 @@ var matplot = (function() {
         // http://stackoverflow.com/questions/12796513/html5-canvas-to-png-file
         var dataURL;
 
-        dataURL = this.canvas.toDataURL("image/png");
+        dataURL = this.context.canvas.toDataURL("image/png");
 
         return {data: dataURL, download: 'figure.png'};
 
