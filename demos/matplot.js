@@ -436,7 +436,9 @@ var matplot = (function() {
         // event handler will be attached to this.elem
         this.elem = this.svg;
         this.parentStack = [this.axis];
+        this.current = 0;
 
+        this.layers = [];
         this.idconter = 0;
     };
 
@@ -446,19 +448,48 @@ var matplot = (function() {
 
     mp.SVGCanvas.prototype.push = function (elem) {
         this.parentStack.push(elem);
+        this.current += 1;
     };
 
     mp.SVGCanvas.prototype.pop = function () {
         return this.parentStack.pop();
+        this.current -= 1;
+    };
+
+    mp.SVGCanvas.prototype.down = function () {
+        this.current -= 1;
+    };
+
+    mp.SVGCanvas.prototype.up = function () {
+        this.current += 1;
     };
 
     mp.SVGCanvas.prototype.parent = function () {
+        //return this.parentStack[this.current];
         return this.parentStack[this.parentStack.length-1];
     };
 
     mp.SVGCanvas.prototype.mk = function mk(tag,attribs,children) {
         return mp.mk(this.xmlns,tag,attribs,children);
     };
+
+    // create a new layer and make it current
+     mp.SVGCanvas.prototype.newLayer = function() {
+         var layer = {};
+
+         this.elem.appendChild(layer.group = this.mk('g'));         
+         this.push(layer.group);
+         
+         return layer;
+    };
+
+    // remove a layer and make previous one current
+     mp.SVGCanvas.prototype.removeLayer = function(layer) {
+         this.elem.removeChild(layer.group);         
+         this.parentStack = this.parentStack.filter(function(_) { 
+             return _.group !== layer.group; });
+    };
+
 
     mp.SVGCanvas.prototype.append = function(elem) {
 
@@ -489,6 +520,10 @@ var matplot = (function() {
         
         this.push(g = this._group({'clip-path': 'url(#' + id + ')'}));
         return g;
+    };
+
+    mp.SVGCanvas.prototype.exitClipRect = function() {
+        this.pop();
     };
 
     mp.SVGCanvas.prototype._group = function(style) {
@@ -715,18 +750,18 @@ var matplot = (function() {
                                [this.axis = this.mk('g',{})]));
 
         // event handler will be attached to this.elem
-        //this.elem = this.svg;
         this.elem = this.canvas;
-        this.parentStack = [this.axis];
-
         this.context = this.canvas.getContext('2d');
         this.idconter = 0;
+        this.parentStack = [{canvas: this.canvas, context: this.context}];
+
 
         // list of interactive elements
         this.interactive = [];
 
         var that = this;
-        this.elem.addEventListener('mousedown',function(ev) {
+        //this.elem.addEventListener('mousedown',function(ev) {
+        this.container.addEventListener('mousedown',function(ev) {
             var ev2 = {};
 
             ev2.x = ev.pageX - that.container.offsetLeft;
@@ -743,12 +778,16 @@ var matplot = (function() {
         return 'matplot' + (this.idconter++);
     };
 
-    mp.RasterCanvas.prototype.push = function (elem) {
-        this.context.save();  
+    mp.RasterCanvas.prototype.push = function (layer) {
+        //this.context.save();  
+        this.parentStack.push(layer);
+        this.context = layer.context;
     };
 
     mp.RasterCanvas.prototype.pop = function () {
-        this.context.restore();
+        //this.context.restore();
+        this.parentStack.pop();
+        this.context = this.parentStack[this.parentStack.length-1].context;
     };
 
     mp.RasterCanvas.prototype.parent = function () {
@@ -776,12 +815,12 @@ var matplot = (function() {
             if (elem[0] <= ev.x && ev.x <= elem[1] &&
                 elem[2] <= ev.y && ev.y <= elem[3]) {
                 
+                ev.target = elem;
                 // call event handler
                 elem[4](ev);
             }
         }
         
-        return 'matplot' + (this.idconter++);
     };
 
     mp.RasterCanvas.prototype.clear = function() {
@@ -789,10 +828,48 @@ var matplot = (function() {
     };
 
     mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {        
-        this.push();
+        this.context.save();  
         this.context.rect(x,y,w,h);
         this.context.clip();
     };
+
+    mp.RasterCanvas.prototype.exitClipRect = function() {
+        this.context.restore();  
+    };
+
+    // create a new layer and make it current
+     mp.RasterCanvas.prototype.newLayer = function() {
+         var layer = {}, canvas, parent;
+
+        this.container.appendChild(
+            canvas = mp.mk('','canvas',{
+                width: this.canvas.width, 
+                height: this.canvas.height,
+                style: {position: 'absolute',
+                        top: '0px',
+                        left: '0px'
+                       }                
+            }));
+
+         layer = {canvas: canvas, context: canvas.getContext('2d')};
+         //this.parentStack.push(layer);         
+         this.push(layer);
+         
+         return layer;
+    };
+
+    // remove a layer and make previous one current
+     mp.RasterCanvas.prototype.removeLayer = function(layer) {
+         // make sure that this is not the current layer
+         if (this.canvas === layer.canvas) {
+             console.error('cannot remove current layer');
+         }
+
+         this.container.removeChild(layer.canvas);
+         this.parentStack = this.parentStack.filter(function(_) { 
+             return _.canvas !== layer.canvas; });
+    };
+
 
     mp.RasterCanvas.prototype.rect = function(x,y,width,height,style) {
         var rect, fill;
@@ -2035,7 +2112,7 @@ var matplot = (function() {
         }
 
         // exit clip rectangle
-        this.fig.canvas.pop();
+        this.fig.canvas.exitClipRect();
 
         /*
           this.fig.canvas.rect(
@@ -2421,8 +2498,14 @@ var matplot = (function() {
     };
 
     mp.Axis.prototype.drawAnnotation = function(x,y,z,text,style) {
-        var bbox, pos, an = {}, padding = 4, i, j, that = this, w, h;
+        var bbox, pos, an = {}, padding = 4, i, j, that = this, w, h, layer;
         style = style || {};
+
+        if (style.onclick === undefined) {
+            style.onclick = function(event) {
+                that.removeAnnotation(an);
+            }
+        }
 
         pos = this.project([x,y,z]);
         bbox = this.fig.canvas.textBBox(text);
@@ -2431,28 +2514,35 @@ var matplot = (function() {
         w = bbox.width + 2*padding;
         h = bbox.height + 2*padding;
 
+        layer = this.fig.canvas.newLayer();
+        an.layer = layer;
+
         an.rect = this.fig.canvas.rect(i,j,w,h,
-                                       {fill: style.fill || '#ffc',
-                                        onclick: function(event) {
-                                            that.removeAnnotation(an);
-                                        }
-                                       });
+                             {fill: style.fill || '#ffc',
+                              onclick: style.onclick
+/*                              onclick: function(event) {
+                                  that.removeAnnotation(an);
+                              }*/
+                             });
 
         i += padding;
         j += padding;
 
         an.text = this.fig.canvas.text(i,j,text,
-                                       {VerticalAlignment: 'top',
-                                        onclick: function(event) {
-                                            that.removeAnnotation(an);
-                                        }});
+                             {VerticalAlignment: 'top',
+                              onclick: style.onclick
+/*                              onclick: function(event) {
+                                  that.removeAnnotation(an);
+                              }*/
+                              });
+
+        // use the previous layer as the current one
+        this.fig.canvas.pop();
         return an;
     };
 
     mp.Axis.prototype.removeAnnotation = function(an) {
-        //return;
-        this.fig.canvas.remove(an.text);
-        this.fig.canvas.remove(an.rect);
+        this.fig.canvas.removeLayer(an.layer);
     };
 
     mp.Axis.prototype.toggleAnnotation = function(event,elem,x,y,z,text) {
