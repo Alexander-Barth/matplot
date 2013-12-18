@@ -219,22 +219,23 @@ var matplot = (function() {
         return document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Shape", "1.1");
     };
 
-    mp.peaks = function() {
-        var i, j, x=[], y=[], z=[], f;
+    mp.peaks = function(N) {
+        var i, j, x=[], y=[], z=[], f, N;
+        N = (N === undefined ? 50 : N);
 
         f = function(x,y) {
             return 3*(1-x)*(1-x)*Math.exp(-x*x - (y+1)*(y+1)) -
                 10*(x/5 - x*x*x - Math.pow(y,5))*Math.exp(-x*x-y*y) -
                 1/3*Math.exp(-(x+1)*(x+1) - y*y); };
 
-        for (i=0; i < 49; i++) {
+        for (i=0; i < N-1; i++) {
             x[i] = [];
             y[i] = [];
             z[i] = [];
 
-            for (j=0; j < 49; j++) {
-                x[i][j] = -3 + i/8;
-                y[i][j] = -3 + j/8;
+            for (j=0; j < N-1; j++) {
+                x[i][j] = -3 + 6.25 * i/N;
+                y[i][j] = -3 + 6.25 * j/N;
                 z[i][j] = f(x[i][j],y[i][j]);
             }
         }
@@ -1331,6 +1332,59 @@ var matplot = (function() {
         }
     };
 
+
+    // Scatter object
+
+    mp.Scatter = function Scatter(x,y,z,size,c,style) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.size = size;
+        this.c = c;
+        this.style = style || {};
+    };
+
+    mp.Scatter.prototype.lim = function(what) {
+        var tmp = this[what];
+        return mp.dataRange(tmp);
+    };
+
+    mp.Scatter.prototype.draw = function(axis) {
+        var i,xv,yv,zv,uv,vv,scale, a, b, x,y,z, u,v,w, style, key;
+
+        scale = (this.style.scale === undefined ? 1 : this.style.scale);
+        a = (this.style.relLen === undefined ? 0.7 : this.style.relLen);
+        b = (this.style.relOpen === undefined ? 0.2 : this.style.relOpen);
+
+        // make a copy
+        style = {};
+        for (key in this.style) {
+            if (this.style.hasOwnProperty(key)) {
+                style[key] = this.style[key];
+            }
+        }
+
+        style.marker = style.marker || 'o';
+
+        for (i=0; i<this.x.length; i++) {
+            x = this.x[i];
+            y = this.y[i];
+            z = this.z[i];
+
+            if (this.style.color === undefined) {
+                if (mp.isArray(this.c)) {
+                    style.color = axis.cmap.get(this.c[i]);
+                    style.MarkerFaceColor = style.color;
+                }
+            }
+
+            style.markerSize = this.size[i];
+
+            axis.drawLine([this.x[i]],[this.y[i]],[this.z[i]],style);
+        }
+    };
+
+
     mp.ColorMap = function ColorMap(cLim,type) {
         this.cLim = cLim;
         this.type = type || 'jet';
@@ -1785,14 +1839,23 @@ var matplot = (function() {
         if (this.children.length > 0) {
             for (i = 0; i<this.children.length; i++) {
                 range = this.children[i].lim(what);
-                min = Math.min(min,range[0]);
-                max = Math.max(max,range[1]);
+
+                if (!isNaN(range[0])) {
+                    console.log('lim a',what,min,max,range,isNaN(range[0]));
+                    min = Math.min(min,range[0]);
+                    console.log('lim',what,min,max,range);
+                }
+
+                if (!isNaN(range[1])) {
+                    max = Math.max(max,range[1]);
+                }
             }
         }
         else {
             min = max = NaN;
         }
 
+        console.log('lim',what,min,max);
         return [min,max];
     };
 
@@ -1907,7 +1970,7 @@ var matplot = (function() {
     };
 
     mp.Axis.prototype.quiver = function(x,y,u,v,style) {
-        var z, w, color;
+        var i, z, w, color;
         style = style || {};
         x = mp.flatten(x);
         y = mp.flatten(y);
@@ -1936,6 +1999,54 @@ var matplot = (function() {
         this.children.push(new mp.Quiver(x,y,z,u,v,z,color,style));
     };
 
+
+    mp.Axis.prototype.scatter = function(x,y,size,c,style) {
+        var i, z, s;
+
+        x = mp.flatten(x);
+        y = mp.flatten(y);
+
+        if (typeof size == 'number') {
+            s = []
+            for (i=0; i<x.length; i++) {
+                s[i] = size;
+            }
+        }
+        else {
+            s = mp.flatten(size);
+        }
+
+        c = mp.flatten(c);
+        
+        z = [];
+        for (i=0; i<x.length; i++) {
+            z[i] = 0;
+        }
+
+        this.children.push(new mp.Scatter(x,y,z,s,c,style));
+    };
+
+    mp.Axis.prototype.scatter3 = function(x,y,z,size,c,style) {
+        var i, s;
+
+        x = mp.flatten(x);
+        y = mp.flatten(y);
+        z = mp.flatten(z);
+        c = mp.flatten(c);
+
+        if (typeof size == 'number') {
+            s = []
+            for (i=0; i<x.length; i++) {
+                s[i] = size;
+            }
+        }
+        else {
+            s = mp.flatten(size);
+        }
+
+        
+        this.children.push(new mp.Scatter(x,y,z,s,c,style));
+    };
 
     mp.Axis.prototype.is2dim = function() {
         var _zrange = this._zrange;
@@ -2502,8 +2613,8 @@ var matplot = (function() {
                 maxWidth = Math.max(maxWidth,bbox.width);
                 maxHeight = Math.max(maxHeight,bbox.height);
 
-                if (style.markersize !== undefined) {
-                    maxMarkerSize = Math.max(maxMarkerSize,style.markersize);
+                if (style.markerSize !== undefined) {
+                    maxMarkerSize = Math.max(maxMarkerSize,style.markerSize);
                 }
 
                 n = n+1;
@@ -2782,7 +2893,7 @@ var matplot = (function() {
                     }(l));
                 }
 
-                ms = style.markersize || 7;
+                ms = style.markerSize || 7;
                 
                 if (style.marker === 'o') {
                     opt.fill = style.MarkerFaceColor;
