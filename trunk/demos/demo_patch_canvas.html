@@ -18,7 +18,7 @@
 function init() {      
   
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500);
+fig = new matplot.Figure("plot",700,500, {renderer: matplot.RasterCanvas});
 
 // add axis to the figure
 ax = fig.axes();
@@ -43,7 +43,7 @@ addEventListener('load', function (event) { prettyPrint() }, false);
     <pre class=prettyprint>
 
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500);
+fig = new matplot.Figure("plot",700,500, {renderer: matplot.RasterCanvas});
 
 // add axis to the figure
 ax = fig.axes();

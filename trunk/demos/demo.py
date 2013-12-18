@@ -115,7 +115,7 @@ fig.draw();
      'name': 'patch',
      'javascript': '''
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500);
+fig = new matplot.Figure("plot",700,500$renderer);
 
 // add axis to the figure
 ax = fig.axes();
