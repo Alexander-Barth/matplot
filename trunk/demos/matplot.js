@@ -720,7 +720,7 @@ var matplot = (function() {
     };
 
     mp.SVGCanvas.prototype.serialize = function() {
-        var s, xml;
+        var s, xml, blob, mimetype = 'image/svg+xml';
 
         s = new XMLSerializer();
         xml = s.serializeToString(this.svg);
@@ -732,7 +732,20 @@ var matplot = (function() {
             xml = xml.replace('<svg ', '<svg xmlns="' + this.xmlns + '" ');
         }
 
-        return xml;
+        // no longer necessary?
+        /*
+        if (!document.createElement('a').hasOwnProperty('download')) {
+            // if download attribute is not supported force download by using different mime-type
+            // This is the case for Firefox 18
+            mimetype = 'application/octet-stream';
+        }
+        */
+
+        blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>',xml],
+                        {'type': mimetype});
+
+        return {data: URL.createObjectURL(blob),
+                download: 'figure.svg'};
     };
 
 
@@ -1036,7 +1049,7 @@ var matplot = (function() {
 
         dataURL = this.canvas.toDataURL("image/png");
 
-        return dataURL;
+        return {data: dataURL, download: 'figure.png'};
 
     };
 
@@ -3021,7 +3034,7 @@ var matplot = (function() {
                                                mp.html('li',{},[
                                                    mp.html('a',{'href': '#', 
                                                                 'onclick': function(ev) { return that.save(this); },
-                                                                'download': 'figure.svg'},
+                                                                'download': 'figure'},
                                                            ['Download'])]),
                                                mp.html('li',{},[
                                                    mp.html('a',{'href': '#', 
@@ -3219,18 +3232,10 @@ var matplot = (function() {
     };
 
     mp.Figure.prototype.save = function(elem) {
-        var xml, blob, mimetype = 'image/svg+xml';
-        
-        xml = this.canvas.serialize();
-        
-        if (!document.createElement('a').hasOwnProperty('download')) {
-            // if download attribute is not supported force download by using different mime-type
-            // This is the case for Firefox 18
-            mimetype = 'application/octet-stream';
-        }
-
-        blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>',xml],{'type': mimetype});
-        elem.href = URL.createObjectURL(blob);
+        var fig;                
+        fig = this.canvas.serialize();
+        elem.href = fig.data;
+        elem.download = fig.download;
         this.closeContextmenu();
     };
 
