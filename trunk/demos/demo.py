@@ -378,7 +378,7 @@ def makeDemos(demos):
                 namespace['renderer'] = ', {renderer: ' + renderer + '}'
             else:
                 rtype = 'svg'
-                filename = 'demo_' + demo['name'] + '_svg' + '.html'
+                filename = 'demo_' + demo['name'] + '.html'
                 namespace['renderer'] = ''
 
             example += [' <a href="',filename,'">',rtype,'</a> ']
