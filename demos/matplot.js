@@ -130,6 +130,7 @@ var matplot = (function() {
 
     mp.DEFAULT_FONT = '"Liberation Sans"';
     mp.DEFAULT_FONT = 'Arial';
+    mp.DEFAULT_FONT_SIZE = 18;
 
     mp.colormaps = {'jet':
                     [
@@ -442,7 +443,7 @@ var matplot = (function() {
     };
 
     mp.SVGCanvas.prototype.id = function () {
-        return 'matplot' + (this.idconter++);
+        return 'matplot_svg_canvas_' + (this.idconter++);
     };
 
     mp.SVGCanvas.prototype.push = function (elem) {
@@ -455,9 +456,6 @@ var matplot = (function() {
 
     mp.SVGCanvas.prototype.parent = function () {
         var g = this._currentLayer.groups;
-        //return this.parentStack[this.current];
-//        return this.parentStack[this.parentStack.length-1];
-//        return this._currentLayer.group;
         return g[g.length-1];
     };
 
@@ -493,14 +491,6 @@ var matplot = (function() {
         }
     };
 
-
-    mp.SVGCanvas.prototype.append = function(elem) {
-
-    };
-
-    mp.SVGCanvas.prototype.remove = function(elem) {
-        this.parent().removeChild(elem);
-    };
 
     mp.SVGCanvas.prototype.clear = function() {
         var elem;
@@ -610,7 +600,7 @@ var matplot = (function() {
         var text, FontSize, FontFamily, bbox;
 
         style = style || {};
-        FontSize = style.FontSize || 18;
+        FontSize = style.FontSize || mp.DEFAULT_FONT_SIZE;
         FontFamily = style.FontFamily || mp.DEFAULT_FONT;
 
         // text should not be visible
@@ -634,7 +624,7 @@ var matplot = (function() {
         style = style || {};
         offseti = style.offseti || 0;
         offsetj = style.offsetj || 0;
-        FontSize = style.FontSize || 18;
+        FontSize = style.FontSize || mp.DEFAULT_FONT_SIZE;
         FontFamily = style.FontFamily || mp.DEFAULT_FONT;
         color = style.color || 'black';
         HorizontalAlignment = style.HorizontalAlignment || 'left';
@@ -752,7 +742,7 @@ var matplot = (function() {
         this.container = container;
         this.width = width;
         this.height = height;
-        this.parentStack = [];
+        this.layers = [];
 
         this.container.appendChild(
             this.canvasLayers = mp.html('div', { style: { 
@@ -782,8 +772,8 @@ var matplot = (function() {
     mp.RasterCanvas.prototype.processEvent = function (ev) {
         var i, j, elem, elements;
 
-        for (j = this.parentStack.length-1; j >= 0; j--) {
-            elements = this.parentStack[j].interactive;
+        for (j = this.layers.length-1; j >= 0; j--) {
+            elements = this.layers[j].interactive;
 
             for (i = elements.length-1; i >= 0; i--) {
                 elem = elements[i];
@@ -797,26 +787,6 @@ var matplot = (function() {
                 }
             }
         }        
-    };
-
-    mp.RasterCanvas.prototype.clear = function() {
-        var elem;
-
-        while (elem = this.canvasLayers.firstChild) {
-            this.canvasLayers.removeChild(elem);
-        } 
-
-        this.newLayer();
-    };
-
-    mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {        
-        this.context.save();  
-        this.context.rect(x,y,w,h);
-        this.context.clip();
-    };
-
-    mp.RasterCanvas.prototype.exitClipRect = function() {
-        this.context.restore();  
     };
 
     // create a new layer and make it current
@@ -840,7 +810,7 @@ var matplot = (function() {
                   interactive:  []
                  };
 
-         this.parentStack.push(layer);
+         this.layers.push(layer);
          this.context = layer.context;
          this.interactive = layer.interactive;
          
@@ -855,7 +825,7 @@ var matplot = (function() {
          }
 
          this.canvasLayers.removeChild(layer.canvas);
-         this.parentStack = this.parentStack.filter(function(_) { 
+         this.layers = this.layers.filter(function(_) { 
              return _.context !== layer.context; });
     };
 
@@ -870,6 +840,27 @@ var matplot = (function() {
             this.interactive = layer.interactive;            
         }
     };
+
+    mp.RasterCanvas.prototype.clear = function() {
+        var elem;
+
+        while (elem = this.canvasLayers.firstChild) {
+            this.canvasLayers.removeChild(elem);
+        } 
+
+        this.newLayer();
+    };
+
+    mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {        
+        this.context.save();  
+        this.context.rect(x,y,w,h);
+        this.context.clip();
+    };
+
+    mp.RasterCanvas.prototype.exitClipRect = function() {
+        this.context.restore();  
+    };
+
 
     mp.RasterCanvas.prototype.rect = function(x,y,width,height,style) {
         var rect, fill;
@@ -959,7 +950,7 @@ var matplot = (function() {
         var text, FontSize, FontFamily, bbox, metrics;
 
         style = style || {};
-        FontSize = style.FontSize || 18;
+        FontSize = style.FontSize || mp.DEFAULT_FONT_SIZE;
         FontFamily = style.FontFamily || mp.DEFAULT_FONT;
 
         this.context.save();          
@@ -977,7 +968,7 @@ var matplot = (function() {
         style = style || {};
         offseti = style.offseti || 0;
         offsetj = style.offsetj || 0;
-        FontSize = style.FontSize || 18;
+        FontSize = style.FontSize || mp.DEFAULT_FONT_SIZE;
         FontFamily = style.FontFamily || mp.DEFAULT_FONT;
         color = style.color || 'black';
         HorizontalAlignment = style.HorizontalAlignment || 'left';
@@ -1039,12 +1030,23 @@ var matplot = (function() {
 
     mp.RasterCanvas.prototype.serialize = function() {
         // http://stackoverflow.com/questions/12796513/html5-canvas-to-png-file
-        var dataURL;
+        var offscreencanvas, context, dataURL, j;
 
-        dataURL = this.context.canvas.toDataURL("image/png");
+        // merge all layers in a offscreen canvas
+
+        offscreencanvas = mp.html('canvas',{
+            width: this.width, 
+            height: this.height});
+
+        context = offscreencanvas.getContext('2d');
+
+        for (j = 0; j < this.layers.length; j++) {
+            context.drawImage(this.layers[j].context.canvas, 0, 0);
+        }
+
+        dataURL = offscreencanvas.toDataURL("image/png");
 
         return {data: dataURL, download: 'figure.png'};
-
     };
 
 
