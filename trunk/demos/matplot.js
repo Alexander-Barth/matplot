@@ -1841,9 +1841,7 @@ var matplot = (function() {
                 range = this.children[i].lim(what);
 
                 if (!isNaN(range[0])) {
-                    console.log('lim a',what,min,max,range,isNaN(range[0]));
                     min = Math.min(min,range[0]);
-                    console.log('lim',what,min,max,range);
                 }
 
                 if (!isNaN(range[1])) {
@@ -1855,7 +1853,6 @@ var matplot = (function() {
             min = max = NaN;
         }
 
-        console.log('lim',what,min,max);
         return [min,max];
     };
 
