@@ -63,8 +63,8 @@ fig = new matplot.Figure("plot",700,500, {renderer: matplot.RasterCanvas});
 ax = fig.axes();
 
 // loop over all countries and polygones
-for (i=0; i < countries.length; i++) {
-  for (j=0; j < countries[i].coordinates.length; j++) {
+for (i=0; i &lt; countries.length; i++) {
+  for (j=0; j &lt; countries[i].coordinates.length; j++) {
     // countries[i].coordinates[j] is a list of [longitude,latitude]
     coord = numeric.transpose(countries[i].coordinates[j]);
     ax.patch(coord[0],coord[1],{color: 'blue'});

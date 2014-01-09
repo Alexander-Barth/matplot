@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from Cheetah.Template import Template
-
+from cgi import escape
 
 version = '0.1.1';
 namespace = {'matplot_lib': '../matplot-' + version + '.js', 
@@ -39,7 +39,7 @@ addEventListener('load', function (event) { prettyPrint() }, false);
     <div id="plot"></div>
     <h2>Code:</h2>
     <pre class=prettyprint>
-$javascript
+$javascript_escaped
     </pre>    
   </body>
 </html>
@@ -223,6 +223,55 @@ ax.colorbar();
 fig.draw();
 '''},
 
+#############################
+
+     {'title': 'overlay',
+      'description': 'Overlay of two plots',
+      'name': 'overlay',
+      'javascript': '''
+var i,j, u=[], v=[], xq = [], yq = [];
+  
+// load the peaks sample data
+peaks = matplot.peaks();
+
+for (i=0; i < peaks.x.length-2; i++) {
+  u[i] = [];
+  v[i] = [];
+  xq[i] = [];
+  yq[i] = [];
+
+  for (j=0; j < peaks.x[0].length-2; j++) {
+    xq[i][j] = peaks.x[i+1][j+1]
+    yq[i][j] = peaks.y[i+1][j+1]
+
+    // compute geostrophic currents
+    u[i][j] = -(peaks.z[i+1][j+2] - peaks.z[i+1][j]);
+    v[i][j] = peaks.z[i+2][j+1] - peaks.z[i][j+1];
+  }
+}
+
+// make a figure of size 700 x 500 pixels
+//fig = new matplot.Figure("plot",700,500,{renderer: matplot.RasterCanvas});
+fig = new matplot.Figure("plot",700,500);
+
+// add axis to the figure
+ax = fig.axes();
+
+
+// pseudo color plot
+ax.pcolor(peaks.x,peaks.y,peaks.z);
+
+// arrow plot
+ax.quiver(xq,yq,u,v,{scale: 0.1});
+
+// add color-bar
+ax.colorbar();
+
+// draw everything
+fig.draw();
+'''},
+
+#############################
 
     {'title': 'scatter',
      'description': '2D scatter plot (function scatter)',
@@ -387,11 +436,13 @@ def makeDemos(demos):
 
             example += [' <a href="',filename,'">',rtype,'</a> ']
     
-            javascript = demo['javascript']
+            javascript = demo['javascript'].replace('$renderer',namespace['renderer'])
             
             f = open(filename,'w')
             f.write(str(Template(templateDef, searchList=[
-                            {'javascript': javascript.replace('$renderer',namespace['renderer'])},
+                            {'javascript': javascript,
+                             'javascript_escaped': escape(javascript)
+                             },
                             demo,namespace])))
             f.close();
 
