@@ -220,6 +220,41 @@ var matplot = (function() {
         return document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Shape", "1.1");
     };
 
+    // clone a object
+    // http://stackoverflow.com/questions/728360/most-elegant-way-to-clone-a-javascript-object
+
+    mp.clone = function (obj) {
+        // Handle the 3 simple types, and null or undefined
+        if (null == obj || "object" != typeof obj) return obj;
+
+        // Handle Date
+        if (obj instanceof Date) {
+            var copy = new Date();
+            copy.setTime(obj.getTime());
+            return copy;
+        }
+
+        // Handle Array
+        if (obj instanceof Array) {
+            var copy = [];
+            for (var i = 0, len = obj.length; i < len; i++) {
+                copy[i] = clone(obj[i]);
+            }
+            return copy;
+        }
+
+        // Handle Object
+        if (obj instanceof Object) {
+            var copy = {};
+            for (var attr in obj) {
+                if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+            }
+            return copy;
+        }
+
+        throw new Error("Unable to copy obj! Its type isn't supported.");
+    }
+
     mp.peaks = function(N) {
         var i, j, x=[], y=[], z=[], f, N;
         N = (N === undefined ? 50 : N);
@@ -1503,6 +1538,7 @@ var matplot = (function() {
         this.zLabelFormat = function(x) {return mp.remove_spurious_decimals(x.toString());};
 
         this.gridLineStyle = ':';
+        this.legendZIndex = 1000;
 
         this.annotationNDigits = 3;
         this.annotationFormat = function(x) {
@@ -2607,7 +2643,7 @@ var matplot = (function() {
         var style, label, maxWidth = -Infinity, maxHeight=-Infinity, 
             maxMarkerSize=0, bbox, x, y, n=0, i, w, h,
             margin = 10, padding = 7, lineSpace = 1, iconWidth = 25, iconSep = 5,
-            legendWidth, legendHeight;
+        legendWidth, legendHeight;
 
 
         for (i = 0; i<this.children.length; i++) {
@@ -2647,6 +2683,7 @@ var matplot = (function() {
                 //this.fig.canvas.line([x,x + iconWidth],[y,y],style);
                 this.drawProjectedLine([x + maxMarkerSize,x + maxMarkerSize + iconWidth],
                                        [y,y],
+                                       [this.legendZIndex,this.legendZIndex],
                                        style);
 
                 this.fig.canvas.text(x + 2*maxMarkerSize + iconWidth + iconSep,
@@ -2721,7 +2758,7 @@ var matplot = (function() {
         }(l));
 
         this.renderedElements.push(
-            {'zIndex': Math.min.apply(null,zindex),
+            {'zIndex': Math.min.apply(null,zindex),             
              'fun': this.fig.canvas.polygon,
              'args': [i,j,{fill: color,
                            stroke: color,
@@ -2836,7 +2873,7 @@ var matplot = (function() {
     };
 
     mp.Axis.prototype.drawLine = function(x,y,z,style) {
-        var pos, i=[], j=[], l;
+        var pos, i=[], j=[], zindex = [], l;
         style = style || {};
 
         for (l = 0; l < x.length; l++) {
@@ -2845,7 +2882,7 @@ var matplot = (function() {
 
             if (isNaN(x[l]) || isNaN(y[l]) || isNaN(z[l])) {
                 //this.drawProjectedLine(i,j,style,x,y,z);
-                pos = [NaN,NaN];
+                pos = [NaN,NaN,NaN];
             }
             else {
                 pos = this.project([x[l],y[l],z[l]]);
@@ -2853,14 +2890,15 @@ var matplot = (function() {
 
             i.push(pos[0]);
             j.push(pos[1]);
+            zindex.push(pos[2]);
         }
 
-        this.drawProjectedLine(i,j,style,x,y,z);
+        this.drawProjectedLine(i,j,zindex,style,x,y,z);
     };
 
 
-    mp.Axis.prototype.drawProjectedLine = function(i,j,style,x,y,z) {
-        var l, opt = {}, that = this, ms, is = [], js = [];
+    mp.Axis.prototype.drawProjectedLine = function(i,j,zindex,style,x,y,z) {
+        var l, opt = {}, that = this, ms, is = [], js = [], zindexs = [];
         style = style || {};
 
         //this.fig.canvas.line(i,j,style);
@@ -2870,13 +2908,22 @@ var matplot = (function() {
             if (isNaN(i[l]) || isNaN(j[l])) {
                 if (is.length > 0) {
                     this.fig.canvas.line(is,js,style);
+
+                    this.renderedElements.push(
+                        {'zIndex': Math.min.apply(null,zindex),             
+                         'fun': this.fig.canvas.line,
+                         'args': [is,js,style]});
+
+
                     is = [];
                     js = [];
+                    zindexs = [];
                 }
             }
             else {
                 is.push(i[l]);
                 js.push(j[l]);
+                zindexs.push(zindex[l]);
             }
         }
         this.fig.canvas.line(is,js,style);
