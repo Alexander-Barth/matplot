@@ -362,12 +362,16 @@ $example
 '''
 def makeDemos(demos):
     example = []
+    onlySVG = True
 
     for demo in demos:
         if 'head' not in demo:
             demo['head'] = ''
     
-        example += ['<li>' + demo['description']]
+        if onlySVG:
+            example += ['<li><a href="demo_' + demo['name'] + '.html">'+ demo['description'] + "</a>"]
+        else:
+            example += ['<li>' + demo['description']]
  
         for renderer in ['','matplot.RasterCanvas']:
 
