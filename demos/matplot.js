@@ -2907,7 +2907,7 @@ var matplot = (function() {
         for (l = 0; l < i.length; l++) {
             if (isNaN(i[l]) || isNaN(j[l])) {
                 if (is.length > 0) {
-                    this.fig.canvas.line(is,js,style);
+                    //this.fig.canvas.line(is,js,style);
 
                     this.renderedElements.push(
                         {'zIndex': Math.min.apply(null,zindex),             
