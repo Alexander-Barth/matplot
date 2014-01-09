@@ -238,7 +238,7 @@ var matplot = (function() {
         if (obj instanceof Array) {
             var copy = [];
             for (var i = 0, len = obj.length; i < len; i++) {
-                copy[i] = clone(obj[i]);
+                copy[i] = mp.clone(obj[i]);
             }
             return copy;
         }
@@ -247,7 +247,7 @@ var matplot = (function() {
         if (obj instanceof Object) {
             var copy = {};
             for (var attr in obj) {
-                if (obj.hasOwnProperty(attr)) copy[attr] = clone(obj[attr]);
+                if (obj.hasOwnProperty(attr)) copy[attr] = mp.clone(obj[attr]);
             }
             return copy;
         }
@@ -2350,10 +2350,39 @@ var matplot = (function() {
 
     };
 
+    mp.Axis.prototype.renderElements = function() {
+        var i, elem;
+
+        // add order field to rendered elements
+        for (i = 0; i < this.renderedElements.length; i++) {
+            this.renderedElements[i].order = i;
+        }       
+
+        // sort all rendered elements depending on zIndex, then on order
+        this.renderedElements.sort(function(x,y) { 
+            var zdiff = x.zIndex - y.zIndex;
+            if (zdiff !== 0) {
+                return zdiff;
+            }
+            else {
+                return x.order - y.order;
+            }
+        });
+
+        // pass all rendered elements to canvas
+        for (i = 0; i < this.renderedElements.length; i++) {
+            elem = this.renderedElements[i];        
+            elem.fun.apply(this.fig.canvas,elem.args);
+        }
+
+        this.renderedElements = [];
+    }
+
     mp.Axis.prototype.draw = function() {
-        var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, scale, that = this, elem, lr, ul, an;
+        var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, scale, that = this, lr, ul, an;
 
         this.setupProjection();
+        this.renderedElements = [];
         
         console.log('project ',this.project([25.5,-0.3,0]));
 
@@ -2366,21 +2395,13 @@ var matplot = (function() {
         // set clip rectangle
         this.fig.canvas.clipRect(this.ul[0],this.ul[1],this.lr[0]-this.ul[0],this.lr[1]-this.ul[1]);
 
-        this.renderedElements = [];
-
         // draw all children
         for (i = 0; i < this.children.length; i++) {
             this.children[i].draw(this);
         }
 
-        // sort all rendered elements depending on zIndex
-        this.renderedElements.sort(function(x,y) { return x.zIndex - y.zIndex; });
-
-        // pass all rendered elements to canvas
-        for (i = 0; i < this.renderedElements.length; i++) {
-            elem = this.renderedElements[i];        
-            elem.fun.apply(this.fig.canvas,elem.args);
-        }
+        // render first batch of elements inside the clipping region
+        this.renderElements();
 
         // annotation    
         for (i = 0; i < this._annotations.length; i++) {
@@ -2412,6 +2433,8 @@ var matplot = (function() {
             this.drawLegend();
         }
 
+        // render second batch of elements outside the clipping region
+        this.renderElements();
     };
 
 
@@ -2910,9 +2933,9 @@ var matplot = (function() {
                     //this.fig.canvas.line(is,js,style);
 
                     this.renderedElements.push(
-                        {'zIndex': Math.min.apply(null,zindex),             
+                        {'zIndex': Math.min.apply(null,zindexs), 
                          'fun': this.fig.canvas.line,
-                         'args': [is,js,style]});
+                         'args': [mp.clone(is),mp.clone(js),mp.clone(style)]});
 
 
                     is = [];
@@ -2926,7 +2949,12 @@ var matplot = (function() {
                 zindexs.push(zindex[l]);
             }
         }
-        this.fig.canvas.line(is,js,style);
+
+//        this.fig.canvas.line(is,js,style);
+        this.renderedElements.push(
+            {'zIndex': Math.min.apply(null,zindexs),             
+             'fun': this.fig.canvas.line,
+             'args': [mp.clone(is),mp.clone(js),mp.clone(style)]});
 
 
         // plot makers
