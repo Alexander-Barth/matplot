@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <meta name="author" content="Alexander Barth">
+
+   <title>matplot: overlay</title>
+   <link href="style.css" rel="stylesheet" type="text/css" />
+   <link href="prettify/prettify.css" type="text/css" rel="stylesheet" />
+   <script type="text/javascript" src="prettify/prettify.js"></script>
+   <script type="text/javascript" src="numeric-1.2.3.js"></script>
+   <link href="../matplot.css" rel="stylesheet" type="text/css" />
+   <script type="text/javascript" src="matplot.js"></script>
+
+
+   <script type="text/javascript">
+function init() {      
+  
+var i,j, u=[], v=[], xq = [], yq = [];
+  
+// load the peaks sample data
+peaks = matplot.peaks();
+
+for (i=0; i < peaks.x.length-2; i++) {
+  u[i] = [];
+  v[i] = [];
+  xq[i] = [];
+  yq[i] = [];
+
+  for (j=0; j < peaks.x[0].length-2; j++) {
+    xq[i][j] = peaks.x[i+1][j+1]
+    yq[i][j] = peaks.y[i+1][j+1]
+
+    // compute geostrophic currents
+    u[i][j] = -(peaks.z[i+1][j+2] - peaks.z[i+1][j]);
+    v[i][j] = peaks.z[i+2][j+1] - peaks.z[i][j+1];
+  }
+}
+
+// make a figure of size 700 x 500 pixels
+//fig = new matplot.Figure("plot",700,500,{renderer: matplot.RasterCanvas});
+fig = new matplot.Figure("plot",700,500);
+
+// add axis to the figure
+ax = fig.axes();
+
+
+// pseudo color plot
+ax.pcolor(peaks.x,peaks.y,peaks.z);
+
+// arrow plot
+ax.quiver(xq,yq,u,v,{scale: 0.1});
+
+// add color-bar
+ax.colorbar();
+
+// draw everything
+fig.draw();
+
+}
+
+addEventListener('load', function (event) { prettyPrint() }, false);
+
+    </script>
+ </head>
+    <body onload="init()">
+    <h1>matplot: overlay</h1>
+    <p>Overlay of two plots</p>
+    <div id="plot"></div>
+    <h2>Code:</h2>
+    <pre class=prettyprint>
+
+var i,j, u=[], v=[], xq = [], yq = [];
+  
+// load the peaks sample data
+peaks = matplot.peaks();
+
+for (i=0; i &lt; peaks.x.length-2; i++) {
+  u[i] = [];
+  v[i] = [];
+  xq[i] = [];
+  yq[i] = [];
+
+  for (j=0; j &lt; peaks.x[0].length-2; j++) {
+    xq[i][j] = peaks.x[i+1][j+1]
+    yq[i][j] = peaks.y[i+1][j+1]
+
+    // compute geostrophic currents
+    u[i][j] = -(peaks.z[i+1][j+2] - peaks.z[i+1][j]);
+    v[i][j] = peaks.z[i+2][j+1] - peaks.z[i][j+1];
+  }
+}
+
+// make a figure of size 700 x 500 pixels
+//fig = new matplot.Figure("plot",700,500,{renderer: matplot.RasterCanvas});
+fig = new matplot.Figure("plot",700,500);
+
+// add axis to the figure
+ax = fig.axes();
+
+
+// pseudo color plot
+ax.pcolor(peaks.x,peaks.y,peaks.z);
+
+// arrow plot
+ax.quiver(xq,yq,u,v,{scale: 0.1});
+
+// add color-bar
+ax.colorbar();
+
+// draw everything
+fig.draw();
+
+    </pre>    
+  </body>
+</html>
