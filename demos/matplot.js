@@ -909,10 +909,12 @@ var matplot = (function() {
             this.context.fillRect(x,y,width,height); 
         }
 
+        this.context.beginPath();
+        this.context.rect(x,y,width,height); 
         this.context.lineWidth = 1;
         this.context.strokeStyle = style.stroke || 'black';
-        this.context.rect(x,y,width,height); 
         this.context.stroke();
+
         this.context.restore();
 
         if (style.onclick) {
@@ -2693,7 +2695,8 @@ var matplot = (function() {
 
         x = this.fig.canvas.width*(this.x+this.w) - margin - legendWidth;
         y = this.fig.canvas.height*(1-this.y-this.h) + margin;
-        this.fig.canvas.rect(x,y,legendWidth,legendHeight,{fill: 'white'});
+        this.fig.canvas.rect(x,y,legendWidth,legendHeight,
+                             {fill: 'white',stroke: 'black'});
 
         x = x + padding;
         y = y + padding + maxHeight/2;
