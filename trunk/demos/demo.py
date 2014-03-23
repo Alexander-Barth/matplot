@@ -62,7 +62,7 @@ demos = [
  }
  
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500$renderer);
+fig = new matplot.Figure($divid,700,500$renderer);
 ax = fig.axes();
 
 // simple plot using indices as x-axis and values in parameter z as y-axis
@@ -94,7 +94,7 @@ fig.draw();
 peaks = matplot.peaks();
 
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500$renderer);
+fig = new matplot.Figure($divid,700,500$renderer);
 
 // add axis to the figure
 ax = fig.axes();
@@ -115,7 +115,7 @@ fig.draw();
      'name': 'patch',
      'javascript': '''
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500$renderer);
+fig = new matplot.Figure($divid,700,500$renderer);
 
 // add axis to the figure
 ax = fig.axes();
@@ -139,7 +139,7 @@ var i,j, coord;
 
 
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500$renderer);
+fig = new matplot.Figure($divid,700,500$renderer);
 
 // add axis to the figure
 ax = fig.axes();
@@ -181,7 +181,7 @@ for (i=0; i < 100; i++) {
   }
 }
 
-fig = new matplot.Figure("plot",700,500$renderer);
+fig = new matplot.Figure($divid,700,500$renderer);
 ax = fig.axes();
 ax.pcolor(x,y,z);
 ax.colorbar();
@@ -213,7 +213,7 @@ for (i=0; i < 30; i++) {
   }
 }
 
-fig = new matplot.Figure("plot",700,500$renderer);
+fig = new matplot.Figure($divid,700,500$renderer);
 ax = fig.axes();
 //ax.quiver(x,y,u,v,{scale: 0.1,color: 'green'});
 ax.quiver(x,y,u,v,{scale: 0.1,color: 'norm'});
@@ -251,8 +251,8 @@ for (i=0; i < peaks.x.length-2; i++) {
 }
 
 // make a figure of size 700 x 500 pixels
-//fig = new matplot.Figure("plot",700,500,{renderer: matplot.RasterCanvas});
-fig = new matplot.Figure("plot",700,500);
+//fig = new matplot.Figure($divid,700,500,{renderer: matplot.RasterCanvas});
+fig = new matplot.Figure($divid,700,500);
 
 // add axis to the figure
 ax = fig.axes();
@@ -292,7 +292,7 @@ for (i=0; i < 100; i++) {
   
 }
 
-fig = new matplot.Figure("plot",700,500$renderer);
+fig = new matplot.Figure($divid,700,500$renderer);
 ax = fig.axes();
 ax.scatter(x,y,5,c);
 ax.DataAspectRatio([1,1,1]);
@@ -311,7 +311,7 @@ fig.draw();
 peaks = matplot.peaks();
 
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500);
+fig = new matplot.Figure($divid,700,500);
 
 // add axis to the figure
 ax = fig.axes();
@@ -368,7 +368,7 @@ for (i=0; i < 4; i++) {
 }
 
 
-fig = new matplot.Figure("plot",700,500);
+fig = new matplot.Figure($divid,700,500);
 ax = fig.axes();
 ax.scatter3(x,y,z,5,c);
 ax.DataAspectRatio([1,1,1]);
@@ -436,7 +436,7 @@ def makeDemos(demos):
 
             example += [' <a href="',filename,'">',rtype,'</a> ']
     
-            javascript = demo['javascript'].replace('$renderer',namespace['renderer'])
+            javascript = demo['javascript'].replace('$renderer',namespace['renderer']).replace('$divid','"plot"')
             
             f = open(filename,'w')
             f.write(str(Template(templateDef, searchList=[
