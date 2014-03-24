@@ -1,4 +1,4 @@
-YUICOMPRESSOR=/home/abarth/Downloads/yuicompressor-2.4.2/build/yuicompressor-2.4.2.jar
+YUICOMPRESSOR=$(HOME)/opt/yuicompressor-2.4.8.jar
 
 SOURCE=demos/matplot.js
 
@@ -10,8 +10,6 @@ TARGET_MIN=matplot-$(VERSION)-min.js
 # temporary directory for SVN export
 TMP=/tmp/matplot
 
-UPLOAD_DIR=gher-diva:/var/www/matplot/
-#UPLOAD_DIR=localhost:/var/www/upload/matplot/
 
 all: $(TARGET_MIN) demo
 
