@@ -25,7 +25,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-/*jslint browser: true, continue: true, devel: true, indent: 4, maxerr: 50, newcap: false, plusplus: false, regexp: true, vars: false, white: false, nomen: false */
+/*jslint browser: true, continue: true, devel: true, indent: 4, maxerr: 50, newcap: false, plusplus: false, regexp: true, vars: false, white: false, nomen: true */
 
 /*jshint browser: true, devel: true, indent: 4, maxerr: 50, newcap: false, plusplus: false, regexp: true, white: false, nomen: false */
 /*global numeric: false, XMLSerializer: false, Blob: false, URL: false, WheelEvent: false */
@@ -36,17 +36,17 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 (function(window, document) {
     "use strict";
- 
+
     var prefix = "", _addEventListener, onwheel, support;
- 
+
     // detect event model
-    if ( window.addEventListener ) {
+    if (window.addEventListener) {
         _addEventListener = "addEventListener";
     } else {
         _addEventListener = "attachEvent";
         prefix = "on";
     }
- 
+
     // detect available wheel event
     if ( document.onmousewheel !== undefined ) {
         // Webkit and IE support at least "mousewheel"
@@ -224,19 +224,21 @@ var matplot = (function() {
     // http://stackoverflow.com/questions/728360/most-elegant-way-to-clone-a-javascript-object
 
     mp.clone = function (obj) {
+        var copy;
+
         // Handle the 3 simple types, and null or undefined
-        if (null == obj || "object" != typeof obj) return obj;
+        if (null === obj || "object" !== typeof obj) return obj;
 
         // Handle Date
         if (obj instanceof Date) {
-            var copy = new Date();
+            copy = new Date();
             copy.setTime(obj.getTime());
             return copy;
         }
 
         // Handle Array
         if (obj instanceof Array) {
-            var copy = [];
+            copy = [];
             for (var i = 0, len = obj.length; i < len; i++) {
                 copy[i] = mp.clone(obj[i]);
             }
@@ -245,7 +247,7 @@ var matplot = (function() {
 
         // Handle Object
         if (obj instanceof Object) {
-            var copy = {};
+            copy = {};
             for (var attr in obj) {
                 if (obj.hasOwnProperty(attr)) copy[attr] = mp.clone(obj[attr]);
             }
@@ -253,10 +255,10 @@ var matplot = (function() {
         }
 
         throw new Error("Unable to copy obj! Its type isn't supported.");
-    }
+    };
 
     mp.peaks = function(N) {
-        var i, j, x=[], y=[], z=[], f, N;
+        var i, j, x=[], y=[], z=[], f;
         N = (N === undefined ? 50 : N);
 
         f = function(x,y) {
@@ -452,7 +454,7 @@ var matplot = (function() {
         else if (linespec === '--') {
             return [15,5];
         }
-    }
+    };
 
     mp.SVGCanvas = function SVGCanvas(container,width,height) {
         this.xmlns = "http://www.w3.org/2000/svg";
@@ -523,15 +525,17 @@ var matplot = (function() {
         else {
             // set current layer
             this._currentLayer = layer;
+            return this._currentLayer;
         }
     };
 
 
     mp.SVGCanvas.prototype.clear = function() {
-        var elem;
+        var elem = this.svg.firstChild;
 
-        while (elem = this.svg.firstChild) {
+        while (elem) {
             this.svg.removeChild(elem);
+            elem = this.svg.firstChild;
         }    
 
         this.newLayer();
@@ -713,7 +717,7 @@ var matplot = (function() {
         linespec = style.linespec || '-';
 
         if (linespec === 'none') {
-            return;
+            return null;
         }
         
         if (linespec === '-') {
@@ -865,22 +869,22 @@ var matplot = (function() {
     };
 
     mp.RasterCanvas.prototype.currentLayer = function(layer) {
-        if (arguments.length === 0) {
-            // get current layer
-            return {context: this.context, interactive: this.interactive};
-        }
-        else {
+        if (arguments.length !== 0) {
             // set current layer
             this.context = layer.context;
             this.interactive = layer.interactive;            
         }
+
+        // get current layer
+        return {context: this.context, interactive: this.interactive};
     };
 
     mp.RasterCanvas.prototype.clear = function() {
-        var elem;
+        var elem = this.canvasLayers.firstChild;
 
-        while (elem = this.canvasLayers.firstChild) {
+        while (elem) {
             this.canvasLayers.removeChild(elem);
+            elem = this.canvasLayers.firstChild;
         } 
 
         this.newLayer();
@@ -972,13 +976,13 @@ var matplot = (function() {
         this.context.stroke();
         this.context.restore();
 
-        if (style.onclick) {
 /*
+        if (style.onclick) {
             this.interactive.push([x-radius/2,x+radius/2,
                                    y-radius/2,y+radius/2,style.onclick]);
 
-*/
         }
+*/
 
 
     };
@@ -1282,8 +1286,6 @@ var matplot = (function() {
     };
 
     mp.Line.prototype.draw = function(axis) {
-        var i,j
-
         axis.drawLine(this.x,this.y,this.z,this.style);
     };
 
@@ -1917,7 +1919,7 @@ var matplot = (function() {
         // handle the case of missing style object
         if (Object.prototype.toString.call(lastArg) === '[object Array]' ) {
             args.push({});
-            return mp.Axis.prototype.plot.apply(this,args);
+            mp.Axis.prototype.plot.apply(this,args);
         }
 
         if (args.length === 2) {
@@ -2051,7 +2053,7 @@ var matplot = (function() {
         y = mp.flatten(y);
 
         if (typeof size == 'number') {
-            s = []
+            s = [];
             for (i=0; i<x.length; i++) {
                 s[i] = size;
             }
@@ -2079,7 +2081,7 @@ var matplot = (function() {
         c = mp.flatten(c);
 
         if (typeof size == 'number') {
-            s = []
+            s = [];
             for (i=0; i<x.length; i++) {
                 s[i] = size;
             }
@@ -2333,8 +2335,7 @@ var matplot = (function() {
             mp.translate([this.fig.canvas.width*(this.x + this.w/2),
                           this.fig.canvas.height*(1 - this.y - this.h/2),
                           0]),
-            mp.scale([scale,-scale,1])
-        );
+            mp.scale([scale,-scale,1]));
 
         //console.log('upper left  ',[left,top,0,1],this.fig.canvas.width*this.w,right-left);
         //console.log('vp upper left  ',numeric.dot(this.viewport,[left,top,0,1]));
@@ -2378,7 +2379,7 @@ var matplot = (function() {
         }
 
         this.renderedElements = [];
-    }
+    };
 
     mp.Axis.prototype.draw = function() {
         var i, j, k, is2D, databox, pdatabox=[], behindz=Infinity, behindind, scale, that = this, lr, ul, an;
@@ -2808,7 +2809,7 @@ var matplot = (function() {
         if (style.onclick === undefined) {
             style.onclick = function(event) {
                 that.removeAnnotation(an);
-            }
+            };
         }
 
         pos = this.project([x,y,z]);
