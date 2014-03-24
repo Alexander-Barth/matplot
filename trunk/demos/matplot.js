@@ -1,7 +1,7 @@
 /*
   matplot, JavaScript Matrix Plotting library
 
-  Copyright (C) 2012, 2013 Alexander Barth <a dot barth at ulg.ac.be>.
+  Copyright (C) 2012-2014 Alexander Barth <a dot barth at ulg.ac.be>.
 
   Released under the MIT license
 
@@ -27,14 +27,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*jslint browser: true, continue: true, devel: true, indent: 4, maxerr: 50, newcap: false, plusplus: false, regexp: true, vars: false, white: false, nomen: true */
 
-/*jshint browser: true, devel: true, indent: 4, maxerr: 50, newcap: false, plusplus: false, regexp: true, white: false, nomen: false */
+/*jshint browser: true, devel: true, indent: 4, maxerr: 50, newcap: false, plusplus: false, regexp: true, white: false, nomen: false, onevar: false */
 /*global numeric: false, XMLSerializer: false, Blob: false, URL: false, WheelEvent: false */
 
 // creates a global "addwheelListener" method
 // example: addWheelListener( elem, function( e ) { console.log( e.deltaY ); e.preventDefault(); } );
 // https://developer.mozilla.org/en-US/docs/Mozilla_event_reference/wheel
 
-(function(window, document) {
+(function (window, document) {
     "use strict";
 
     var prefix = "", _addEventListener, onwheel, support;
@@ -224,7 +224,7 @@ var matplot = (function() {
     // http://stackoverflow.com/questions/728360/most-elegant-way-to-clone-a-javascript-object
 
     mp.clone = function (obj) {
-        var copy;
+        var copy, i, attr, len;
 
         // Handle the 3 simple types, and null or undefined
         if (null === obj || "object" !== typeof obj) return obj;
@@ -239,7 +239,7 @@ var matplot = (function() {
         // Handle Array
         if (obj instanceof Array) {
             copy = [];
-            for (var i = 0, len = obj.length; i < len; i++) {
+            for (i = 0, len = obj.length; i < len; i++) {
                 copy[i] = mp.clone(obj[i]);
             }
             return copy;
@@ -248,7 +248,7 @@ var matplot = (function() {
         // Handle Object
         if (obj instanceof Object) {
             copy = {};
-            for (var attr in obj) {
+            for (attr in obj) {
                 if (obj.hasOwnProperty(attr)) copy[attr] = mp.clone(obj[attr]);
             }
             return copy;
@@ -314,19 +314,19 @@ var matplot = (function() {
         // pefered increments
 
         if (sdt <= 1.5) {
-	    sdt = 1;
+            sdt = 1;
         }
         else if (sdt < 2.5) {
-	    sdt = 2;
+           sdt = 2;
         }
         else if (sdt <= 4) {
-	    sdt = 3;
+           sdt = 3;
         }
         else if (sdt <= 7) {
-	    sdt = 5;
+           sdt = 5;
         }
         else {
-	    sdt = 10;
+           sdt = 10;
         }
 
         dt = sdt * base;
@@ -344,13 +344,13 @@ var matplot = (function() {
         t = [];
 
         for(i=0;i<nt;i++) {
-	    t[i] = t0 + i*dt;
+           t[i] = t0 + i*dt;
 
-	    // attempt to remove spurious decimals
-	    eps = dt;
-	    t[i] = Math.round(t[i]/eps)*eps;
+           // attempt to remove spurious decimals
+           eps = dt;
+           t[i] = Math.round(t[i]/eps)*eps;
 
-	    if (Math.abs(t[i])<1e-14) {
+           if (Math.abs(t[i])<1e-14) {
                 t[i]=0;
             }
         }
@@ -362,7 +362,7 @@ var matplot = (function() {
         var re1,re2,s2,s3;
 
         if (typeof s === "number") {
-	    s = s.toString();
+           s = s.toString();
         }
 
         re1 = new RegExp("(\\.[0-9]*[1-9]+)0{4,}.*$");
@@ -2073,7 +2073,7 @@ var matplot = (function() {
     };
 
     mp.Axis.prototype.scatter3 = function(x,y,z,size,c,style) {
-        var i, s;
+        var i, s, tCT;
 
         x = mp.flatten(x);
         y = mp.flatten(y);
@@ -2200,7 +2200,7 @@ var matplot = (function() {
                 this._CameraPosition = [-36.5257, -47.6012, 86.6025];
             }
 
-	    this._CameraViewAngle = 10.339584907201978;
+            this._CameraViewAngle = 10.339584907201978;
 
 
             if (this._DataAspectRatioMode === 'auto') {
@@ -2219,8 +2219,8 @@ var matplot = (function() {
 
         // scale vector by aspect ratio and apply transformation function
         var tr = function(x) { 
-            var xs = numeric.div(x,that._DataAspectRatio);
-            var p = that._transform[0]([xs[0],xs[1],xs[2],1]);
+            var p, xs = numeric.div(x,that._DataAspectRatio);
+            p = that._transform[0]([xs[0],xs[1],xs[2],1]);
             return [p[0],p[1],p[2]];
         };
 
