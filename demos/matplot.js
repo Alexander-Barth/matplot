@@ -746,7 +746,7 @@ var matplot = (function() {
         return polyline;
     };
 
-    mp.SVGCanvas.prototype.serialize = function() {
+    mp.SVGCanvas.prototype.serialize = function(callback) {
         var s, xml, blob, mimetype = 'image/svg+xml';
 
         s = new XMLSerializer();
@@ -768,11 +768,11 @@ var matplot = (function() {
         }
         */
 
+		mimetype = 'application/octet-stream';
         blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>',xml],
                         {'type': mimetype});
 
-        return {data: URL.createObjectURL(blob),
-                download: 'figure.svg'};
+        callback({data: blob, download: 'figure.svg'});
     };
 
 
@@ -1069,8 +1069,9 @@ var matplot = (function() {
 
     };
 
-    mp.RasterCanvas.prototype.serialize = function() {
+    mp.RasterCanvas.prototype.serialize = function(callback) {
         // http://stackoverflow.com/questions/12796513/html5-canvas-to-png-file
+		// would be better to return a blob as the SVG serialize function, however canvas.toBlob is not 
         var offscreencanvas, context, dataURL, j;
 
         // merge all layers in a offscreen canvas
@@ -1084,10 +1085,16 @@ var matplot = (function() {
         for (j = 0; j < this.layers.length; j++) {
             context.drawImage(this.layers[j].context.canvas, 0, 0);
         }
-
-        dataURL = offscreencanvas.toDataURL("image/png");
-
-        return {data: dataURL, download: 'figure.png'};
+        
+        if (offscreencanvas.toBlob) {
+		   offscreencanvas.toBlob(function(blob) {
+				callback({data: blob, download: 'figure.png'});	
+		   },'image/png');
+		}
+		else {
+			dataURL = offscreencanvas.toDataURL("image/png");
+			callback({dataURL: dataURL, download: 'figure.png'});
+		}
     };
 
 
@@ -3306,12 +3313,67 @@ var matplot = (function() {
         this.canvas.clear();
     };
 
-    mp.Figure.prototype.save = function(elem) {
-        var fig;                
-        fig = this.canvas.serialize();
-        elem.href = fig.data;
-        elem.download = fig.download;
-        this.closeContextmenu();
+	mp._dataURLtoBlob = function(dataURL) {
+		// see http://code.google.com/p/chromium/issues/detail?id=67587
+		var parts = dataURL.match(/data:([^;]*)(;base64)?,([0-9A-Za-z+/]+)/);
+
+		//assume base64 encoding
+		var binStr = atob(parts[3]);
+
+		//convert to binary in ArrayBuffer
+		var buf = new ArrayBuffer(binStr.length);
+		var view = new Uint8Array(buf);
+		for (var i = 0; i < view.length; i++) {
+			view[i] = binStr.charCodeAt(i);
+		}
+		
+		return new Blob([view], {'type': parts[1]});	
+	};
+	
+    mp.Figure.prototype.save = function(elem2) {
+        var fig, that = this;                
+        fig = this.canvas.serialize(function(fig) {		
+			//window.open(URL.createObjectURL(fig.data), '_blank', '');
+			that.closeContextmenu();
+			
+			if (navigator.msSaveBlob) {		
+				// for Internet Explorer
+				//window.open(fig.dataURL);
+				  
+				if (fig.dataURL) {
+					fig.data = mp._dataURLtoBlob(fig.dataURL);
+				}
+
+				console.log('retval ',navigator.msSaveBlob(fig.data, fig.download));
+				//return false;
+			}
+			else {
+			    var elem = document.createElement("a");
+				
+				if (typeof elem.download !== "undefined") {
+					// for Firefox or Chrome
+					if (fig.data) {
+					   elem.href = URL.createObjectURL(fig.data);
+					}
+					else {
+					   elem.href = fig.dataURL;			
+					}
+					elem.download = fig.download;
+					console.log('fig.data ',fig.data);
+					
+					var event = document.createEvent('MouseEvents');
+					event.initMouseEvent('click', true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
+					elem.dispatchEvent(event);
+				}
+				else {
+					alert('Your browser does not support downloading. Try the Firefox, Chrome or Internet Explorer 11');
+				}
+				//elem.click();
+				//return true;
+			}		
+		});
+		
+		return false;
     };
 
     mp.Figure.prototype.resetZoom = function() {
