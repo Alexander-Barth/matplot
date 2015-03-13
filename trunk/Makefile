@@ -34,8 +34,8 @@ tar: $(TARGET_MIN) $(TARGET)
 	tar --exclude-vcs  --exclude=admin -C $(TMP) -cvzf build/matplot-$(VERSION).tar.gz .
 
 upload: tar
-	./admin/googlecode_upload.py -s "version $(VERSION) of matplot" -p matplot -u 'barth.alexander@gmail.com' -l "JavaScript,HTML,Visualization" build/matplot-$(VERSION).tar.gz
-
+	scp build/matplot-$(VERSION).tar.gz modb:/var/lib/mediawiki/upload/Alex/matplot
+	ssh modb "cd /var/lib/mediawiki/upload/Alex/matplot; rm -f matplot.tar.gz; ln -s matplot-$(VERSION).tar.gz matplot.tar.gz"
 jslint:
 	jslint $(SOURCE)
 
