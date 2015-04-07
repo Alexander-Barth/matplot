@@ -2610,7 +2610,7 @@ var matplot = (function() {
             j = axind[0];
             k = axind[1];
 
-            //this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
+            this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
         }
 
         j = axind[0];
