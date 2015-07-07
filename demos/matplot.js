@@ -1,7 +1,7 @@
 /*
   matplot, JavaScript Matrix Plotting library
 
-  Copyright (C) 2012-2014 Alexander Barth <a dot barth at ulg.ac.be>.
+  Copyright (C) 2012-2015 Alexander Barth <a dot barth at ulg.ac.be>.
 
   Released under the MIT license
 
@@ -201,19 +201,57 @@ var matplot = (function() {
                    };
 
 
+    mp.projection = {};
+
+    mp.projection.Stereographic = function() {
+        this.R = 1;
+        this.lambda0 = 0;        
+        this.phi1 = 0;
+    },
+
+    // http://mathworld.wolfram.com/StereographicProjection.html
+    mp.projection.Stereographic.prototype.transform = function (v) {
+        var lambda = Math.PI*v[0]/180;
+        var phi = Math.PI*v[1]/180;
+
+        var k = (2*this.R)/(1+Math.sin(this.phi1)*Math.sin(phi)+Math.cos(this.phi1)*Math.cos(phi)*Math.cos(lambda-this.lambda0));
+
+        var x = k*Math.cos(phi)*Math.sin(lambda-this.lambda0);
+        var y = k*(Math.cos(this.phi1)*Math.sin(phi)-Math.sin(this.phi1)*Math.cos(phi)*Math.cos(lambda-this.lambda0));
+        
+        return [x,y,v[2],v[3]];
+    },
+
+    mp.projection.Stereographic.prototype.invtransform = function (v) {
+        var x = v[0];
+        var y = v[1];
+        var rho = Math.sqrt(x*x + y*y);
+        var c = 2 * Math.atan(rho/(2*this.R));
+
+        // The inverse formulas for latitude phi and longitude  lambda are then given by
+        
+        var phi = Math.asin(Math.cos(c)*Math.sin(this.phi1) + y*Math.sin(c)*Math.cos(this.phi1)/rho);
+
+        var lambda = this.lambda0 + Math.atan((x * Math.sin(c))/(rho * Math.cos(this.phi1) * Math.cos(c) - y * Math.sin(this.phi1) * Math.sin(c)));
+
+        return [180*lambda/Math.PI,180*phi/Math.PI,v[2],v[3]];
+    },
+
     mp.trans = {
-        'mercator': [
+        'mercator': {
+            transform:
             function(x) { 
                 return [x[0]*Math.PI/180,
                         Math.log(Math.tan(Math.PI/4 + x[1]/2 * Math.PI/180)),
                         x[2],x[3]]; 
             },
+            invtransform:
             function(x) { 
                 return [x[0]*180/Math.PI,
                         360*Math.atan(Math.exp(x[1]))/Math.PI - 90,
                         x[2],x[3]]; 
             }
-        ]
+        }
     };
 
     mp.supportsSVG = function () {
@@ -1566,10 +1604,10 @@ var matplot = (function() {
 
         // transformation function (direct and inverse)
 
-        this._transform = [
-            function(x) { return x; },
-            function(x) { return x; }
-        ];
+        this._transform = {
+            transform: function(x) { return x; },
+            invtransform: function(x) { return x; }
+        };
 
         // all rendered elements
         this.renderedElements = [];
@@ -1852,7 +1890,7 @@ var matplot = (function() {
             v[3] = 1;
         }
 
-        v = this._transform[0](v);
+        v = this._transform.transform(v);
 
 
         // Apply first ModelView matrix and then Projection matrix
@@ -1869,9 +1907,14 @@ var matplot = (function() {
         // viewport transformation
         v = numeric.dot(viewport,v);
 
+        // some elements of v might be NaNs depending on the projection
+        // we need to deal with it later
+        
         if (isNaN(v[0])) {
-            throw "Internal error";
+        //    throw "Internal error";
+            console.warn(u,'produced',v);
         }
+
         return v;
     };
 
@@ -1885,7 +1928,7 @@ var matplot = (function() {
         // inverse of ModelView matrix and then Projection matrix
         v = numeric.dot(this.invProjectionModelView,v);
 
-        v = this._transform[1](v);
+        v = this._transform.invtransform(v);
         return v;
     };
 
@@ -2227,7 +2270,7 @@ var matplot = (function() {
         // scale vector by aspect ratio and apply transformation function
         var tr = function(x) { 
             var p, xs = numeric.div(x,that._DataAspectRatio);
-            p = that._transform[0]([xs[0],xs[1],xs[2],1]);
+            p = that._transform.transform([xs[0],xs[1],xs[2],1]);
             return [p[0],p[1],p[2]];
         };
 
