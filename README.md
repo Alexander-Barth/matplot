@@ -18,5 +18,5 @@ http://alexander-barth.github.io/matplot/demos/
 
 
 Fiddle with matplot 
-http://jsfiddle.net/jr1g5akq/1/, http://jsfiddle.net/Ecppk/2/
+http://jsfiddle.net/jr1g5akq/2/, http://jsfiddle.net/Ecppk/3/
 
