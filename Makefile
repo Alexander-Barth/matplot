@@ -22,20 +22,20 @@ $(TARGET_MIN): $(TARGET) $(LICENCE_HEADER)
 	java -jar $(YUICOMPRESSOR) $(TARGET) >> $(TARGET_MIN)
 
 demo:
-	cd demos; python ./demo.py
+	cd demos; python3 ./demo.py
 
 clean:
 	rm -f $(TARGET_MIN) $(TARGET)
 
 tar: $(TARGET_MIN) $(TARGET)
 	rm -Rf $(TMP)
-	svn export . $(TMP); 
+	svn export . $(TMP);
 	cp $(TARGET_MIN) $(TARGET) $(TMP)
 	tar --exclude-vcs  --exclude=admin -C $(TMP) -cvzf build/matplot-$(VERSION).tar.gz .
 
-upload: tar
-	scp build/matplot-$(VERSION).tar.gz modb:/var/lib/mediawiki/upload/Alex/matplot
-	ssh modb "cd /var/lib/mediawiki/upload/Alex/matplot; rm -f matplot.tar.gz; ln -s matplot-$(VERSION).tar.gz matplot.tar.gz"
+#upload: tar
+#	scp build/matplot-$(VERSION).tar.gz modb:/var/lib/mediawiki/upload/Alex/matplot
+#	ssh modb "cd /var/lib/mediawiki/upload/Alex/matplot; rm -f matplot.tar.gz; ln -s matplot-$(VERSION).tar.gz matplot.tar.gz"
 jslint:
 	jslint $(SOURCE)
 
