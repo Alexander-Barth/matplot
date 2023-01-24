@@ -3174,7 +3174,7 @@ var matplot = (function() {
                                                                 'onclick': function(ev) { return that.resetZoom(); }},
                                                            ['Reset zoom'])]),
                                                mp.html('li',{'class' : 'matplot-about'},[
-                                                   mp.html('a',{'href': 'http://matplot.googlecode.com',
+                                                   mp.html('a',{'href': 'https://github.com/Alexander-Barth/matplot',
                                                                 'target': '_blank'},
                                                            ['About matplot'])])
                                            ])
