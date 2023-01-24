@@ -15,10 +15,10 @@
 
 
    <script type="text/javascript">
-function init() {      
+function init() {
   
 var i,x=[],y=[],c=[];
-  
+
 
 // generate some data to plot
 // generate some data to plot
@@ -29,7 +29,7 @@ for (i=0; i < 100; i++) {
     x[i] = r*Math.cos(theta);
     y[i] = r*Math.sin(theta);
     c[i] = r;
-  
+
 }
 
 fig = new matplot.Figure("plot",700,500);
@@ -54,7 +54,7 @@ addEventListener('load', function (event) { prettyPrint() }, false);
     <pre class=prettyprint>
 
 var i,x=[],y=[],c=[];
-  
+
 
 // generate some data to plot
 // generate some data to plot
@@ -65,10 +65,10 @@ for (i=0; i &lt; 100; i++) {
     x[i] = r*Math.cos(theta);
     y[i] = r*Math.sin(theta);
     c[i] = r;
-  
+
 }
 
-fig = new matplot.Figure("plot",700,500);
+fig = new matplot.Figure(&quot;plot&quot;,700,500);
 ax = fig.axes();
 ax.scatter(x,y,5,c);
 ax.DataAspectRatio([1,1,1]);
@@ -76,6 +76,6 @@ ax.colorbar();
 
 fig.draw();
 
-    </pre>    
+    </pre>
   </body>
 </html>

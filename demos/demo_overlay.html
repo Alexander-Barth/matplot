@@ -15,10 +15,10 @@
 
 
    <script type="text/javascript">
-function init() {      
+function init() {
   
 var i,j, u=[], v=[], xq = [], yq = [];
-  
+
 // load the peaks sample data
 peaks = matplot.peaks();
 
@@ -72,7 +72,7 @@ addEventListener('load', function (event) { prettyPrint() }, false);
     <pre class=prettyprint>
 
 var i,j, u=[], v=[], xq = [], yq = [];
-  
+
 // load the peaks sample data
 peaks = matplot.peaks();
 
@@ -93,8 +93,8 @@ for (i=0; i &lt; peaks.x.length-2; i++) {
 }
 
 // make a figure of size 700 x 500 pixels
-//fig = new matplot.Figure("plot",700,500,{renderer: matplot.RasterCanvas});
-fig = new matplot.Figure("plot",700,500);
+//fig = new matplot.Figure(&quot;plot&quot;,700,500,{renderer: matplot.RasterCanvas});
+fig = new matplot.Figure(&quot;plot&quot;,700,500);
 
 // add axis to the figure
 ax = fig.axes();
@@ -112,6 +112,6 @@ ax.colorbar();
 // draw everything
 fig.draw();
 
-    </pre>    
+    </pre>
   </body>
 </html>

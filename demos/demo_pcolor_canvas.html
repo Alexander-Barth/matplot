@@ -15,7 +15,7 @@
 
 
    <script type="text/javascript">
-function init() {      
+function init() {
   
 var i,j,x=[],y=[],z=[], r, theta;
 
@@ -72,7 +72,7 @@ for (i=0; i &lt; 100; i++) {
   }
 }
 
-fig = new matplot.Figure("plot",700,500, {renderer: matplot.RasterCanvas});
+fig = new matplot.Figure(&quot;plot&quot;,700,500, {renderer: matplot.RasterCanvas});
 ax = fig.axes();
 ax.pcolor(x,y,z);
 ax.colorbar();
@@ -80,6 +80,6 @@ ax.DataAspectRatio([1,1,1]);
 fig.draw();
 
 
-    </pre>    
+    </pre>
   </body>
 </html>

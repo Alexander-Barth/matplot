@@ -15,7 +15,7 @@
 
 
    <script type="text/javascript">
-function init() {      
+function init() {
   
 
 var i, j, k, x = [],y = [], z = [], c = [], r = [];
@@ -33,7 +33,7 @@ for (i=0; i < 4; i++) {
     y[i][j] = [];
     z[i][j] = [];
     c[i][j] = [];
-                
+
     for (k=0; k < 10; k++) {
       r = 20 + 5*i;
       phi = 2*Math.PI * j/19;
@@ -44,7 +44,7 @@ for (i=0; i < 4; i++) {
 
       x[i][j][k] = r * Math.sin(theta) * Math.cos(phi);
       y[i][j][k] = r * Math.sin(theta) * Math.sin(phi);
-      z[i][j][k] = r * Math.cos(theta);  
+      z[i][j][k] = r * Math.cos(theta);
       c[i][j][k] = r;
     }
   }
@@ -90,7 +90,7 @@ for (i=0; i &lt; 4; i++) {
     y[i][j] = [];
     z[i][j] = [];
     c[i][j] = [];
-                
+
     for (k=0; k &lt; 10; k++) {
       r = 20 + 5*i;
       phi = 2*Math.PI * j/19;
@@ -101,14 +101,14 @@ for (i=0; i &lt; 4; i++) {
 
       x[i][j][k] = r * Math.sin(theta) * Math.cos(phi);
       y[i][j][k] = r * Math.sin(theta) * Math.sin(phi);
-      z[i][j][k] = r * Math.cos(theta);  
+      z[i][j][k] = r * Math.cos(theta);
       c[i][j][k] = r;
     }
   }
 }
 
 
-fig = new matplot.Figure("plot",700,500);
+fig = new matplot.Figure(&quot;plot&quot;,700,500);
 ax = fig.axes();
 ax.scatter3(x,y,z,5,c);
 ax.DataAspectRatio([1,1,1]);
@@ -118,6 +118,6 @@ ax.CameraPosition([100,  100,   40]);
 
 fig.draw();
 
-    </pre>    
+    </pre>
   </body>
 </html>

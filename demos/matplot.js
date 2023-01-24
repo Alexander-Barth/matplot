@@ -1,7 +1,7 @@
 /*
   matplot, JavaScript Matrix Plotting library
 
-  Copyright (C) 2012-2014 Alexander Barth <a dot barth at ulg.ac.be>.
+  Copyright (C) 2012-2015 Alexander Barth <a dot barth at ulg.ac.be>.
 
   Released under the MIT license
 
@@ -86,7 +86,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                     }
                 }
             };
-             
+
             // calculate deltaY (and deltaX) according to the event
             if ( support === "mousewheel" ) {
                 event.deltaY = - 1/40 * originalEvent.wheelDelta;
@@ -103,22 +103,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             } else {
                 event.deltaY = originalEvent.detail;
             }
- 
+
             // it's time to fire the callback
             return callback( event );
- 
+
         }, useCapture || false );
     }
- 
+
     window.addWheelListener = function( elem, callback, useCapture ) {
         _addWheelListener( elem, support, callback, useCapture );
- 
+
         // handle MozMousePixelScroll in older Firefox
         if( support === "DOMMouseScroll" ) {
             _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
         }
     };
- 
+
 
 }(window,document));
 
@@ -201,19 +201,57 @@ var matplot = (function() {
                    };
 
 
+    mp.projection = {};
+
+    mp.projection.Stereographic = function() {
+        this.R = 1;
+        this.lambda0 = 0;
+        this.phi1 = 0;
+    },
+
+    // http://mathworld.wolfram.com/StereographicProjection.html
+    mp.projection.Stereographic.prototype.transform = function (v) {
+        var lambda = Math.PI*v[0]/180;
+        var phi = Math.PI*v[1]/180;
+
+        var k = (2*this.R)/(1+Math.sin(this.phi1)*Math.sin(phi)+Math.cos(this.phi1)*Math.cos(phi)*Math.cos(lambda-this.lambda0));
+
+        var x = k*Math.cos(phi)*Math.sin(lambda-this.lambda0);
+        var y = k*(Math.cos(this.phi1)*Math.sin(phi)-Math.sin(this.phi1)*Math.cos(phi)*Math.cos(lambda-this.lambda0));
+
+        return [x,y,v[2],v[3]];
+    },
+
+    mp.projection.Stereographic.prototype.invtransform = function (v) {
+        var x = v[0];
+        var y = v[1];
+        var rho = Math.sqrt(x*x + y*y);
+        var c = 2 * Math.atan(rho/(2*this.R));
+
+        // The inverse formulas for latitude phi and longitude  lambda are then given by
+
+        var phi = Math.asin(Math.cos(c)*Math.sin(this.phi1) + y*Math.sin(c)*Math.cos(this.phi1)/rho);
+
+        var lambda = this.lambda0 + Math.atan((x * Math.sin(c))/(rho * Math.cos(this.phi1) * Math.cos(c) - y * Math.sin(this.phi1) * Math.sin(c)));
+
+        return [180*lambda/Math.PI,180*phi/Math.PI,v[2],v[3]];
+    },
+
     mp.trans = {
-        'mercator': [
-            function(x) { 
+        'mercator': {
+            transform:
+            function(x) {
                 return [x[0]*Math.PI/180,
                         Math.log(Math.tan(Math.PI/4 + x[1]/2 * Math.PI/180)),
-                        x[2],x[3]]; 
+                        x[2],x[3]];
             },
-            function(x) { 
+            invtransform:
+            function(x) {
                 return [x[0]*180/Math.PI,
                         360*Math.atan(Math.exp(x[1]))/Math.PI - 90,
-                        x[2],x[3]]; 
+                        x[2],x[3]];
             }
-        ]
+        }
     };
 
     mp.supportsSVG = function () {
@@ -468,7 +506,7 @@ var matplot = (function() {
                 version: '1.1',
                 baseProfile: 'basic',
                 //xmlns: this.xmlns,
-                width: width, 
+                width: width,
                 height: height
             }));
 
@@ -504,7 +542,7 @@ var matplot = (function() {
      mp.SVGCanvas.prototype.newLayer = function() {
          var layer = {groups: [this.mk('g')]};
 
-         this.elem.appendChild(layer.groups[0]);         
+         this.elem.appendChild(layer.groups[0]);
          this.layers.push(layer);
          this._currentLayer = layer;
          return layer;
@@ -513,7 +551,7 @@ var matplot = (function() {
     // remove a layer and make previous one current
      mp.SVGCanvas.prototype.removeLayer = function(layer) {
          this.elem.removeChild(layer.groups[0]);
-         this.layers = this.layers.filter(function(_) { 
+         this.layers = this.layers.filter(function(_) {
              return _.groups !== layer.groups; });
     };
 
@@ -536,7 +574,7 @@ var matplot = (function() {
         while (elem) {
             this.svg.removeChild(elem);
             elem = this.svg.firstChild;
-        }    
+        }
 
         this.newLayer();
     };
@@ -547,13 +585,13 @@ var matplot = (function() {
         this.parent().appendChild(
             this.mk('defs',{},[
                 this.mk('clipPath',{id: id},[
-                    this.mk('rect',{x: x, y:y, 
+                    this.mk('rect',{x: x, y:y,
                                     width: w, height: h,
                                     style: style
                                    },[])
                 ])
             ]));
-        
+
         this.push(g = this._group({'clip-path': 'url(#' + id + ')'}));
         return g;
     };
@@ -719,7 +757,7 @@ var matplot = (function() {
         if (linespec === 'none') {
             return null;
         }
-        
+
         if (linespec === '-') {
             dasharray = 'none';
         }
@@ -784,14 +822,14 @@ var matplot = (function() {
         this.layers = [];
 
         this.container.appendChild(
-            this.canvasLayers = mp.html('div', { style: { 
+            this.canvasLayers = mp.html('div', { style: {
                 width: width + 'px',
                 height: height + 'px'
             }}));
 
         // some event handler will be attached to this.elem
         this.elem = this.canvasLayers;
-        this.clear();        
+        this.clear();
 
         var that = this;
         //this.elem.addEventListener('mousedown',function(ev) {
@@ -807,7 +845,7 @@ var matplot = (function() {
 
     };
 
-    
+
     mp.RasterCanvas.prototype.processEvent = function (ev) {
         var i, j, elem, elements;
 
@@ -819,13 +857,13 @@ var matplot = (function() {
 
                 if (elem[0] <= ev.x && ev.x <= elem[1] &&
                     elem[2] <= ev.y && ev.y <= elem[3]) {
-                
+
                     ev.target = elem;
                     // call event handler
                     elem[4](ev);
                 }
             }
-        }        
+        }
     };
 
     // create a new layer and make it current
@@ -833,18 +871,18 @@ var matplot = (function() {
         var layer = {}, canvas, parent;
 
         canvas = mp.html('canvas',{
-                width: this.width, 
+                width: this.width,
                 height: this.height,
                 style: {position: 'absolute',
                         top: '0px',
                         left: '0px'
-                       }                
+                       }
         });
 
 
         this.canvasLayers.appendChild(canvas);
 
-         layer = {canvas: canvas, 
+         layer = {canvas: canvas,
                   context: canvas.getContext('2d'),
                   interactive:  []
                  };
@@ -852,7 +890,7 @@ var matplot = (function() {
          this.layers.push(layer);
          this.context = layer.context;
          this.interactive = layer.interactive;
-         
+
          return layer;
     };
 
@@ -864,7 +902,7 @@ var matplot = (function() {
          }
 
          this.canvasLayers.removeChild(layer.canvas);
-         this.layers = this.layers.filter(function(_) { 
+         this.layers = this.layers.filter(function(_) {
              return _.context !== layer.context; });
     };
 
@@ -872,7 +910,7 @@ var matplot = (function() {
         if (arguments.length !== 0) {
             // set current layer
             this.context = layer.context;
-            this.interactive = layer.interactive;            
+            this.interactive = layer.interactive;
         }
 
         // get current layer
@@ -885,19 +923,19 @@ var matplot = (function() {
         while (elem) {
             this.canvasLayers.removeChild(elem);
             elem = this.canvasLayers.firstChild;
-        } 
+        }
 
         this.newLayer();
     };
 
-    mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {        
-        this.context.save();  
+    mp.RasterCanvas.prototype.clipRect = function(x,y,w,h,style) {
+        this.context.save();
         this.context.rect(x,y,w,h);
         this.context.clip();
     };
 
     mp.RasterCanvas.prototype.exitClipRect = function() {
-        this.context.restore();  
+        this.context.restore();
     };
 
 
@@ -907,14 +945,14 @@ var matplot = (function() {
         fill = style.fill || 'none';
 
         this.context.save();
-  
+
         if (fill !== 'none') {
             this.context.fillStyle = fill;
-            this.context.fillRect(x,y,width,height); 
+            this.context.fillRect(x,y,width,height);
         }
 
         this.context.beginPath();
-        this.context.rect(x,y,width,height); 
+        this.context.rect(x,y,width,height);
         this.context.lineWidth = 1;
         this.context.strokeStyle = style.stroke || 'black';
         this.context.stroke();
@@ -956,7 +994,7 @@ var matplot = (function() {
     mp.RasterCanvas.prototype.polygon = function(x,y,style) {
         var polygon, points = '', i, fill;
 
-        this.context.save();  
+        this.context.save();
         this.context.beginPath();
         this.context.moveTo(x[0], y[0]);
 
@@ -971,7 +1009,7 @@ var matplot = (function() {
             this.context.fillStyle = style.fill;
             this.context.fill();
         }
- 
+
         this.context.strokeStyle = style.stroke || 'black';
         this.context.stroke();
         this.context.restore();
@@ -994,7 +1032,7 @@ var matplot = (function() {
         FontSize = style.FontSize || mp.DEFAULT_FONT_SIZE;
         FontFamily = style.FontFamily || mp.DEFAULT_FONT;
 
-        this.context.save();          
+        this.context.save();
         this.context.font = '' + FontSize + 'px ' + FontFamily;
         metrics = this.context.measureText(string);
         this.context.restore();
@@ -1016,7 +1054,7 @@ var matplot = (function() {
         VerticalAlignment = style.VerticalAlignment || 'baseline';
 
 
-        this.context.save();  
+        this.context.save();
         this.context.textAlign = HorizontalAlignment;
 
         if (VerticalAlignment === 'top') {
@@ -1041,7 +1079,7 @@ var matplot = (function() {
         var i, linespec, dasharray;
 
         linespec = style.linespec || '-';
-        this.context.save();  
+        this.context.save();
         this.context.beginPath();
 
         if (!this.context.setLineDash) {
@@ -1071,13 +1109,13 @@ var matplot = (function() {
 
     mp.RasterCanvas.prototype.serialize = function(callback) {
         // http://stackoverflow.com/questions/12796513/html5-canvas-to-png-file
-		// would be better to return a blob as the SVG serialize function, however canvas.toBlob is not 
+		// would be better to return a blob as the SVG serialize function, however canvas.toBlob is not
         var offscreencanvas, context, dataURL, j;
 
         // merge all layers in a offscreen canvas
 
         offscreencanvas = mp.html('canvas',{
-            width: this.width, 
+            width: this.width,
             height: this.height});
 
         context = offscreencanvas.getContext('2d');
@@ -1085,10 +1123,10 @@ var matplot = (function() {
         for (j = 0; j < this.layers.length; j++) {
             context.drawImage(this.layers[j].context.canvas, 0, 0);
         }
-        
+
         if (offscreencanvas.toBlob) {
 		   offscreencanvas.toBlob(function(blob) {
-				callback({data: blob, download: 'figure.png'});	
+				callback({data: blob, download: 'figure.png'});
 		   },'image/png');
 		}
 		else {
@@ -1111,7 +1149,7 @@ var matplot = (function() {
     // ':': all indices of the corresponding dimension
     // [start,end] a range of indices
     // [start,step,end] a range of indices
-    // 
+    //
     // For example:
     // A = [[1,2],[3,4]]
     // subsref(A,[0,1]) is 2 (the same as A[0][1])
@@ -1123,7 +1161,7 @@ var matplot = (function() {
 
         if (i === ':') {
             i = [0,1,arr.length-1];
-        }        
+        }
 
         if (i instanceof Array) {
             // i represents a range
@@ -1131,14 +1169,14 @@ var matplot = (function() {
             if (i.length === 2) {
                 i = [i[0],1,i[1]];
             }
-            
+
             // copy of ind
             ind2 = ind.slice(0);
 
             x = [];
             for (j = i[0]; j <= i[2]; j += i[1]) {
                 ind2[0] = j;
-                x.push(subsref(arr,ind2));            
+                x.push(subsref(arr,ind2));
             }
 
             return x;
@@ -1200,7 +1238,7 @@ var matplot = (function() {
             return [NaN,NaN];
         }
         else {
-            return [min,max];    
+            return [min,max];
         }
     };
 
@@ -1242,7 +1280,7 @@ var matplot = (function() {
                 /*axis.rect([this.x[i][j],this.x[i+1][j]],
                   [this.y[i][j],this.y[i+1][j+1]],
                   this.c[i][j]);*/
-                
+
                 if (!isNaN(this.c[i][j])) {
                     axis.polygon([this.x[i][j],this.x[i+1][j],this.x[i+1][j+1],this.x[i][j+1]],
                                  [this.y[i][j],this.y[i+1][j],this.y[i+1][j+1],this.y[i][j+1]],
@@ -1319,7 +1357,7 @@ var matplot = (function() {
             if (mp.isArray(tmp)) {
                 return mp.dataRange(tmp);
             }
-            
+
             return [NaN,NaN];
         }
 
@@ -1373,10 +1411,10 @@ var matplot = (function() {
             // shaft of the arrow
             xv = [x, x+u];
             yv = [y, y+v];
-            zv = [z, z+w];            
+            zv = [z, z+w];
             axis.drawLine(xv,yv,zv,style);
-            
-            // head of the arrow            
+
+            // head of the arrow
             // ideally take aspect ratio into account
             // the arrow head parallel to the z=0 plane
 
@@ -1475,7 +1513,7 @@ var matplot = (function() {
         this.FontFamily = "Verdana";
         this.FontSize = 15;
         this.color = 'black';
-        this.children = [];    
+        this.children = [];
 
         this._projection = 'orthographic';
 
@@ -1566,10 +1604,10 @@ var matplot = (function() {
 
         // transformation function (direct and inverse)
 
-        this._transform = [
-            function(x) { return x; },
-            function(x) { return x; }
-        ];
+        this._transform = {
+            transform: function(x) { return x; },
+            invtransform: function(x) { return x; }
+        };
 
         // all rendered elements
         this.renderedElements = [];
@@ -1619,7 +1657,7 @@ var matplot = (function() {
 
     // install getter and setter function
     // getting:
-    //   obj.foo(), 
+    //   obj.foo(),
     //      if obj._fooMode is 'auto', the getter will call function func to return its value
     //      if obj._fooMode is 'manual', the getter will return obs._foo
     // setter: obj.foo(val)
@@ -1810,7 +1848,7 @@ var matplot = (function() {
 
         function newrange(lim,c) {
             var xr, xc;
-            
+
             if (delta > 0) {
                 xr = alpha * (lim[1]-lim[0]);
                 xc = alpha * (lim[0]+lim[1])/2 + (1-alpha) * c;
@@ -1819,7 +1857,7 @@ var matplot = (function() {
                 xr =  (lim[1]-lim[0]) / alpha;
                 xc = ((lim[0]+lim[1])/2 - (1-alpha) * c)/alpha;
             }
-            
+
             //console.log('xr ',xr,[xc - xr/2,xc + xr/2]);
             return [xc - xr/2,xc + xr/2];
         }
@@ -1832,7 +1870,7 @@ var matplot = (function() {
     mp.Axis.prototype.resetZoom = function() {
         this.xLimMode('auto');
         this.yLimMode('auto');
-        this.fig.draw();            
+        this.fig.draw();
         this.fig.closeContextmenu();
     };
 
@@ -1842,9 +1880,9 @@ var matplot = (function() {
         options = options || {};
         viewport = options.viewport || this.viewport;
         projectionModelView = options.projectionModelView || this.projectionModelView;
-        
+
         // copy array so that we do not modify u
-        v = u.slice(0); 
+        v = u.slice(0);
         if (v.length === 2) {
             v[2] = 0;
         }
@@ -1852,7 +1890,7 @@ var matplot = (function() {
             v[3] = 1;
         }
 
-        v = this._transform[0](v);
+        v = this._transform.transform(v);
 
 
         // Apply first ModelView matrix and then Projection matrix
@@ -1860,7 +1898,7 @@ var matplot = (function() {
 
         // Perspective division
         // http://www.glprogramming.com/red/chapter03.html
-        
+
         v[0] = v[0]/v[3];
         v[1] = v[1]/v[3];
         v[2] = v[2]/v[3];
@@ -1869,9 +1907,14 @@ var matplot = (function() {
         // viewport transformation
         v = numeric.dot(viewport,v);
 
+        // some elements of v might be NaNs depending on the projection
+        // we need to deal with it later
+
         if (isNaN(v[0])) {
-            throw "Internal error";
+        //    throw "Internal error";
+            console.warn(u,'produced',v);
         }
+
         return v;
     };
 
@@ -1885,7 +1928,7 @@ var matplot = (function() {
         // inverse of ModelView matrix and then Projection matrix
         v = numeric.dot(this.invProjectionModelView,v);
 
-        v = this._transform[1](v);
+        v = this._transform.invtransform(v);
         return v;
     };
 
@@ -2039,7 +2082,7 @@ var matplot = (function() {
         color = style.color; // might be undefined, if which it is not used
         if (color === 'norm') {
             // color == sqrt(u^2 + v^2 + w^2);
-            color = 
+            color =
                 numeric.sqrt(
                     numeric.add(
                         numeric.pow(u,2),
@@ -2070,7 +2113,7 @@ var matplot = (function() {
         }
 
         c = mp.flatten(c);
-        
+
         z = [];
         for (i=0; i<x.length; i++) {
             z[i] = 0;
@@ -2097,7 +2140,7 @@ var matplot = (function() {
             s = mp.flatten(size);
         }
 
-        
+
         this.children.push(new mp.Scatter(x,y,z,s,c,style));
     };
 
@@ -2184,12 +2227,12 @@ var matplot = (function() {
             // y-direction if upward
             this._CameraUpVector = [0,1,0];
 
-            if (this._DataAspectRatioMode === 'auto') {            
+            if (this._DataAspectRatioMode === 'auto') {
                 this._DataAspectRatio = [(this._xLim[1]-this._xLim[0])/(this.w*this.fig.canvas.width),
                                          (this._yLim[1]-this._yLim[0])/(this.h*this.fig.canvas.height),
                                          1];
             }
-            
+
             this._CameraPosition = [this._CameraTarget[0],
                                     this._CameraTarget[1],
                                     this._CameraTarget[2]+1];
@@ -2197,7 +2240,7 @@ var matplot = (function() {
 
 
         }
-        else {        
+        else {
             // need way to calculate it
 
             if (this._CameraPositionMode === 'auto') {
@@ -2225,9 +2268,9 @@ var matplot = (function() {
         }
 
         // scale vector by aspect ratio and apply transformation function
-        var tr = function(x) { 
+        var tr = function(x) {
             var p, xs = numeric.div(x,that._DataAspectRatio);
-            p = that._transform[0]([xs[0],xs[1],xs[2],1]);
+            p = that._transform.transform([xs[0],xs[1],xs[2],1]);
             return [p[0],p[1],p[2]];
         };
 
@@ -2241,12 +2284,12 @@ var matplot = (function() {
 
         // should be [0,0,....] i.e. the target (transformed) should be at the center
         var tCT = tr(this._CameraTarget);
-        console.log('modelView * transformed camera Target',  
+        console.log('modelView * transformed camera Target',
                     numeric.dot(this.modelView,
                                 [tCT[0],tCT[1],tCT[2],1]));
 
 
-        
+
         if (this._projection === 'orthographic') {
             //this.projection = mp.ortho(left, right, bottom, top, near, far);
 
@@ -2287,7 +2330,7 @@ var matplot = (function() {
 
                     left = Math.min(left,v[0]);
                     right = Math.max(right,v[0]);
-                    
+
                     top = Math.max(top,v[1]);
                     bottom = Math.min(bottom,v[1]);
 
@@ -2305,12 +2348,12 @@ var matplot = (function() {
 
         /*
           mapping that would fill all plotting space
-          
+
           [left,top]  -> [this.fig.canvas.width*this.x,this.fig.canvas.height*(1-this.y-this.h)]
           [right,bottom]  -> [this.fig.canvas.width*(this.x+this.w),this.fig.canvas.height*(1-this.y)]
-          
+
           intervals would be scaled this way:
-          
+
           right-left -> this.fig.canvas.width*this.w
           bottom-top -> this.fig.canvas.height*this.h
 
@@ -2326,12 +2369,12 @@ var matplot = (function() {
 
           if x,y projected coordinate (modelview, projection and perspective divide applied),
           screen coordinate i,j (in pixel, upper-right is 0,0) are obtained by:
-          
+
           i = this.fig.canvas.width*(this.x + this.w/2) + scale*x
           j = this.fig.canvas.height*(1 - this.y - this.h/2) - scale*y
 
-          the point [this.fig.canvas.width*(this.x + this.w/2),this.fig.canvas.height*(1 - this.y - this.h/2) ] 
-          is the center of the plotting area            
+          the point [this.fig.canvas.width*(this.x + this.w/2),this.fig.canvas.height*(1 - this.y - this.h/2) ]
+          is the center of the plotting area
         */
 
         scale = Math.min(this.fig.canvas.width*this.w / (right-left),
@@ -2366,10 +2409,10 @@ var matplot = (function() {
         // add order field to rendered elements
         for (i = 0; i < this.renderedElements.length; i++) {
             this.renderedElements[i].order = i;
-        }       
+        }
 
         // sort all rendered elements depending on zIndex, then on order
-        this.renderedElements.sort(function(x,y) { 
+        this.renderedElements.sort(function(x,y) {
             var zdiff = x.zIndex - y.zIndex;
             if (zdiff !== 0) {
                 return zdiff;
@@ -2381,7 +2424,7 @@ var matplot = (function() {
 
         // pass all rendered elements to canvas
         for (i = 0; i < this.renderedElements.length; i++) {
-            elem = this.renderedElements[i];        
+            elem = this.renderedElements[i];
             elem.fun.apply(this.fig.canvas,elem.args);
         }
 
@@ -2393,7 +2436,7 @@ var matplot = (function() {
 
         this.setupProjection();
         this.renderedElements = [];
-        
+
         console.log('project ',this.project([25.5,-0.3,0]));
 
         if (!this.is2D) {
@@ -2413,7 +2456,7 @@ var matplot = (function() {
         // render first batch of elements inside the clipping region
         this.renderElements();
 
-        // annotation    
+        // annotation
         for (i = 0; i < this._annotations.length; i++) {
             an = this._annotations[i];
             this.drawAnnotation(an.x,an.y,an.z,an.text,an.style);
@@ -2449,7 +2492,7 @@ var matplot = (function() {
 
 
     mp.Axis.prototype.drawAxis = function(sv,tickLabel,tickLen,options) {
-        var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v=1, ref, 
+        var dist2 = Infinity, tmp, axind, p1, p2, style, i, j, k, v=1, ref,
         behindind = this.behindind, save_project,
         bbox = [this._xLim,this._yLim,this._zLim];
 
@@ -2470,7 +2513,7 @@ var matplot = (function() {
                 return cshift(cshift(v,1),n-1);
             }
         }
-        
+
         ref = cshift([this._xLim, this._yLim, this._zLim],sv);
         this._xLim = ref[0];
         this._yLim = ref[1];
@@ -2513,7 +2556,7 @@ var matplot = (function() {
 
 
     mp.Axis.prototype.drawAxisX = function(tickLabel,tickLen,options) {
-        var dist2 = Infinity, tmp, axind, p1, p2, p2y, p2z, style, i, j, k, v, 
+        var dist2 = Infinity, tmp, axind, p1, p2, p2y, p2z, style, i, j, k, v,
           dx, dy, dz, numy, numz,
           ticksRefDir, position, box, behindind = this.behindind;
 
@@ -2563,7 +2606,7 @@ var matplot = (function() {
             for (k = 0; k < 2; k++) {
                 // emulate x-or
                 if ( (behindind[1] === j) !== (behindind[2] === k) ) {
-                    // from the two possible locations choose the one 
+                    // from the two possible locations choose the one
                     // which are closest to the lower right corner
 
                     // project start and end point of axis
@@ -2578,12 +2621,12 @@ var matplot = (function() {
 
                     // distance along reference direction
                     tmp = v[0] * ticksRefDir[0] + v[1] * ticksRefDir[1];
-                    
+
                     if (tmp < dist2) {
                         dist2 = tmp;
                         axind = [j,k];
 
-                        // determine if axis is mostly horizontal or vertical 
+                        // determine if axis is mostly horizontal or vertical
                         // for the position of the tick labels
                         if (Math.abs(p2[0]-p1[0]) > Math.abs(p2[1]-p1[1])) {
                             style = {HorizontalAlignment: 'center',
@@ -2592,8 +2635,8 @@ var matplot = (function() {
                         else {
                             style = {HorizontalAlignment: (ticksRefDir[0] > 0 ? 'right' : 'left'),
                                      VerticalAlignment: 'middle'};
-                        }                        
-                    }                    
+                        }
+                    }
                 }
             }
         }
@@ -2610,7 +2653,7 @@ var matplot = (function() {
             j = axind[0];
             k = axind[1];
 
-            //this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
+            this.drawLine(this._xLim,[this._yLim[j],this._yLim[j]],[this._zLim[k],this._zLim[k]]);
         }
 
         j = axind[0];
@@ -2628,17 +2671,17 @@ var matplot = (function() {
 
             p2z = this.project([this.xTick[i],this._yLim[j],this._zLim[k]+1]);
             numz = Math.pow(p2z[0]-p1[0],2) + Math.pow(p2z[1]-p1[1],2);
-            
+
             if (numy > 0 && (j !== behindind[1] || (numz === 0))) {
                 // in y-direction
                 // determine tick length (unprojected)
 
                 dy = tickLen/(2*Math.sqrt(numy));
-                
+
                 this.drawLine([this.xTick[i],this.xTick[i]],
                               [this._yLim[j]-dy,this._yLim[j]+dy],
                               [this._zLim[k],this._zLim[k]]);
-                
+
                 this.text(this.xTick[i],
                           this._yLim[j] + (j === 0 ? -1 : 1) * 2*dy,
                           this._zLim[k],
@@ -2649,11 +2692,11 @@ var matplot = (function() {
 
 
                 dz = tickLen/(2*Math.sqrt(numz));
-                
+
                 this.drawLine([this.xTick[i],this.xTick[i]],
                               [this._yLim[j],this._yLim[j]],
                               [this._zLim[k]-dz,this._zLim[k]+dz]);
-                
+
                 this.text(this.xTick[i],
                           this._yLim[j],
                           this._zLim[k] + (k === 0 ? -1 : 1)* 2 * dz,
@@ -2673,7 +2716,7 @@ var matplot = (function() {
     };
 
     mp.Axis.prototype.drawLegend = function() {
-        var style, label, maxWidth = -Infinity, maxHeight=-Infinity, 
+        var style, label, maxWidth = -Infinity, maxHeight=-Infinity,
             maxMarkerSize=0, bbox, x, y, n=0, i, w, h,
             margin = 10, padding = 7, lineSpace = 1, iconWidth = 25, iconSep = 5,
         legendWidth, legendHeight;
@@ -2792,7 +2835,7 @@ var matplot = (function() {
         }(l));
 
         this.renderedElements.push(
-            {'zIndex': Math.min.apply(null,zindex),             
+            {'zIndex': Math.min.apply(null,zindex),
              'fun': this.fig.canvas.polygon,
              'args': [i,j,{fill: color,
                            stroke: color,
@@ -2944,7 +2987,7 @@ var matplot = (function() {
                     //this.fig.canvas.line(is,js,style);
 
                     this.renderedElements.push(
-                        {'zIndex': Math.min.apply(null,zindexs), 
+                        {'zIndex': Math.min.apply(null,zindexs),
                          'fun': this.fig.canvas.line,
                          'args': [mp.clone(is),mp.clone(js),mp.clone(style)]});
 
@@ -2963,7 +3006,7 @@ var matplot = (function() {
 
 //        this.fig.canvas.line(is,js,style);
         this.renderedElements.push(
-            {'zIndex': Math.min.apply(null,zindexs),             
+            {'zIndex': Math.min.apply(null,zindexs),
              'fun': this.fig.canvas.line,
              'args': [mp.clone(is),mp.clone(js),mp.clone(style)]});
 
@@ -2986,7 +3029,7 @@ var matplot = (function() {
                 }
 
                 ms = style.markerSize || 7;
-                
+
                 if (style.marker === 'o') {
                     opt.fill = style.MarkerFaceColor;
                     opt.stroke = style.MarkerEdgeColor || style.color;
@@ -3016,14 +3059,14 @@ var matplot = (function() {
 
         // total width including margin and space for labels
         w = 2*margin + width + labelSpace;
-        
+
         // check if there is enought space
         if (1 - this.x - this.w < w) {
             // reduce width of axis to make space
             this.w = 1 - this.x - w;
         }
 
-        cax = this.fig.axes(1 - (margin + width + labelSpace),0.1, 
+        cax = this.fig.axes(1 - (margin + width + labelSpace),0.1,
                             width,0.8);
 
         cax.yAxisLocation = 'right';
@@ -3071,10 +3114,10 @@ var matplot = (function() {
                               mp.mk('','p',{},['Old versions of Internet Explorer (version 8 and before) do unfortunately not understand the SVG standard.']),
                               'To see the graphics on this web-page you either need to upgrade your version of Internet Explorer (to version 9 or later) ',
                               'or install a more standard compilant browser such as ',
-                              mp.mk('','a',{href: 'http://www.mozilla.org/'},['Mozilla Firefox']), ' or ', 
+                              mp.mk('','a',{href: 'http://www.mozilla.org/'},['Mozilla Firefox']), ' or ',
                               mp.mk('','a',{href: 'http://www.google.com/chrome/'},['Google Chrome']), '.'])]));
-            
-            
+
+
             throw 'Error: SVG support is not detected';
         }
 
@@ -3087,7 +3130,7 @@ var matplot = (function() {
                     }}
                    );
 
-        this.outerDIV.appendChild(            
+        this.outerDIV.appendChild(
             this.zoomrect = mp.html('div',{
                 'class': 'matplot-zoomrect',
                 'style': {
@@ -3114,30 +3157,30 @@ var matplot = (function() {
                                        [
                                            mp.html('ul',{},[
                                                mp.html('li',{},[
-                                                   mp.html('a',{'href': '#', 
+                                                   mp.html('a',{'href': '#',
                                                                 'onclick': function(ev) { return that.save(this); },
                                                                 'download': 'figure'},
                                                            ['Download'])]),
                                                mp.html('li',{},[
-                                                   mp.html('a',{'href': '#', 
-                                                                'onclick': function(ev) { return that.zoom(-6,ev.pageX,ev.pageY); }}, 
+                                                   mp.html('a',{'href': '#',
+                                                                'onclick': function(ev) { return that.zoom(-6,ev.pageX,ev.pageY); }},
                                                            ['Zoom in'])]),
                                                mp.html('li',{},[
-                                                   mp.html('a',{'href': '#', 
-                                                                'onclick': function(ev) { return that.zoom(6,ev.pageX,ev.pageY); }}, 
+                                                   mp.html('a',{'href': '#',
+                                                                'onclick': function(ev) { return that.zoom(6,ev.pageX,ev.pageY); }},
                                                            ['Zoom out'])]),
                                                mp.html('li',{},[
-                                                   mp.html('a',{'href': '#', 
-                                                                'onclick': function(ev) { return that.resetZoom(); }}, 
+                                                   mp.html('a',{'href': '#',
+                                                                'onclick': function(ev) { return that.resetZoom(); }},
                                                            ['Reset zoom'])]),
                                                mp.html('li',{'class' : 'matplot-about'},[
-                                                   mp.html('a',{'href': 'http://matplot.googlecode.com', 
+                                                   mp.html('a',{'href': 'https://github.com/Alexander-Barth/matplot',
                                                                 'target': '_blank'},
                                                            ['About matplot'])])
                                            ])
                                        ]));
 
-            
+
 
 
         this.container.appendChild(this.outerDIV);
@@ -3146,12 +3189,12 @@ var matplot = (function() {
 
 
         if (this.canvas.elem) {
-            window.addWheelListener(this.canvas.elem, 
-                                    function(ev) { 
+            window.addWheelListener(this.canvas.elem,
+                                    function(ev) {
                                         if (!that.zoom(ev.deltaY,ev.pageX,ev.pageY)) {
-                                            ev.preventDefault(); 
+                                            ev.preventDefault();
                                         }
-                                    }                    
+                                    }
                                    );
         }
 
@@ -3166,7 +3209,7 @@ var matplot = (function() {
             var i,j, ax, v;
             i = ev.pageX - that.container.offsetLeft;
             j = ev.pageY - that.container.offsetTop;
-            
+
             ax = that._axes[0];
             v = ax.unproject([i,j]);
             console.log('getcoordp v',v);
@@ -3188,7 +3231,7 @@ var matplot = (function() {
             if (that.contextmenu.style.display === 'block') {
                 that.contextmenu.style.display = 'none';
             }
-            
+
             // check if left button is pressed
             // IE8- behaviour is different, but IE9 should be W3C conform
             // http://msdn.microsoft.com/en-us/library/ie/ff974877%28v=vs.85%29.aspx
@@ -3203,8 +3246,8 @@ var matplot = (function() {
                 that.zoomrect.style.left = p1[0] + 'px';
                 that.zoomrect.style.top = p1[1] + 'px';
                 that.zoomrect.style.width = '0px';
-                that.zoomrect.style.height = '0px';                
-            }            
+                that.zoomrect.style.height = '0px';
+            }
         });
 
         //this.canvas.elem.addEventListener('mouseup',function(ev) {
@@ -3215,7 +3258,7 @@ var matplot = (function() {
             if (that.zoomrect.style.display === 'block') {
                 that.zoomrect.style.display = 'none';
             }
-            
+
 
             if (that.position1 !== null && that.position2 !== null) {
                 p1 = getcoordp(that.position1);
@@ -3225,13 +3268,13 @@ var matplot = (function() {
                     ax = that._axes[0];
                     ax.xLim([Math.min(p1[0],p2[0]),Math.max(p1[0],p2[0])]);
                     ax.yLim([Math.min(p1[1],p2[1]),Math.max(p1[1],p2[1])]);
-                    that.draw();    
-                }        
+                    that.draw();
+                }
             }
 
             that.position1 = null;
             that.position2 = null;
-        },false); // tigger event in bubbling phase (so that it might be cancled 
+        },false); // tigger event in bubbling phase (so that it might be cancled
 
         //this.canvas.elem.addEventListener('mousemove',function(ev) {
         this.outerDIV.addEventListener('mousemove',function(ev) {
@@ -3249,10 +3292,10 @@ var matplot = (function() {
                     p2 = getcoord(that.position2);
                     x = Math.min(p1[0],p2[0]);
                     w = Math.abs(p2[0]-p1[0]);
-                    
+
                     y = Math.min(p1[1],p2[1]);
                     h = Math.abs(p2[1]-p1[1]);
-                    
+
 
                     that.zoomrect.style.display = 'block';
                     that.zoomrect.style.left = x + 'px';
@@ -3271,7 +3314,7 @@ var matplot = (function() {
                     xs = (p1[0]-that.po[0]);
                     r = [that.orig_xlim[0]-xs,that.orig_xlim[1]-xs];
                     ax.xLim(r);
-                    that.draw();    
+                    that.draw();
                 }
             }
         });
@@ -3293,7 +3336,7 @@ var matplot = (function() {
     };
 
     mp.Figure.prototype.closeContextmenu = function() {
-        this.contextmenu.style.display = 'none';    
+        this.contextmenu.style.display = 'none';
     };
 
     mp.Figure.prototype.axes = function(x,y,w,h) {
@@ -3326,20 +3369,20 @@ var matplot = (function() {
 		for (var i = 0; i < view.length; i++) {
 			view[i] = binStr.charCodeAt(i);
 		}
-		
-		return new Blob([view], {'type': parts[1]});	
+
+		return new Blob([view], {'type': parts[1]});
 	};
-	
+
     mp.Figure.prototype.save = function(elem2) {
-        var fig, that = this;                
-        fig = this.canvas.serialize(function(fig) {		
+        var fig, that = this;
+        fig = this.canvas.serialize(function(fig) {
 			//window.open(URL.createObjectURL(fig.data), '_blank', '');
 			that.closeContextmenu();
-			
-			if (navigator.msSaveBlob) {		
+
+			if (navigator.msSaveBlob) {
 				// for Internet Explorer
 				//window.open(fig.dataURL);
-				  
+
 				if (fig.dataURL) {
 					fig.data = mp._dataURLtoBlob(fig.dataURL);
 				}
@@ -3349,18 +3392,18 @@ var matplot = (function() {
 			}
 			else {
 			    var elem = document.createElement("a");
-				
+
 				if (typeof elem.download !== "undefined") {
 					// for Firefox or Chrome
 					if (fig.data) {
 					   elem.href = URL.createObjectURL(fig.data);
 					}
 					else {
-					   elem.href = fig.dataURL;			
+					   elem.href = fig.dataURL;
 					}
 					elem.download = fig.download;
 					console.log('fig.data ',fig.data);
-					
+
 					var event = document.createEvent('MouseEvents');
 					event.initMouseEvent('click', true, true, window, 1, 0, 0, 0, 0, false, false, false, false, 0, null);
 					elem.dispatchEvent(event);
@@ -3370,9 +3413,9 @@ var matplot = (function() {
 				}
 				//elem.click();
 				//return true;
-			}		
+			}
 		});
-		
+
 		return false;
     };
 
@@ -3382,7 +3425,7 @@ var matplot = (function() {
         ax = this._axes[0];
         ax.xLimMode('auto');
         ax.yLimMode('auto');
-        this.draw();            
+        this.draw();
         this.closeContextmenu();
     };
 
@@ -3390,10 +3433,10 @@ var matplot = (function() {
         var i, j, ri, rj, ax;
         i = pageX - this.container.offsetLeft;
         j = pageY - this.container.offsetTop;
-        
+
         ri = i / this.canvas.width;
         rj = 1 - j / this.canvas.height;
-        
+
         ax = this._axes[0];
         if ((ax.x <= ri && ri <= ax.x + ax.w) &&
             (ax.y <= rj && rj <= ax.y + ax.h)) {
