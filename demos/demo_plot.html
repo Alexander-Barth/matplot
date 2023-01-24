@@ -15,7 +15,7 @@
 
 
    <script type="text/javascript">
-function init() {      
+function init() {
   
  var i,x=[],y=[],z=[];
 
@@ -24,7 +24,7 @@ function init() {
    y[i] = Math.sin(i/5);
    z[i] = Math.sin((i+3)/5);
  }
- 
+
 // make a figure of size 700 x 500 pixels
 fig = new matplot.Figure("plot",700,500);
 ax = fig.axes();
@@ -32,10 +32,10 @@ ax = fig.axes();
 // simple plot using indices as x-axis and values in parameter z as y-axis
 // The curve is draw with the given color. The label will be used later in the legend
 ax.plot(z,{color: 'red', label: 'foo'});
-      
+
 // define marker and marker size
 ax.plot(y,{color: 'blue', marker: 'o', markerSize: 5, label: 'bar'});
- 
+
 // make a dotted line with linespec
 ax.plot(x,y,{color: 'green', marker: 's', linewidth: 2, label: 'baz'});
 
@@ -68,30 +68,30 @@ addEventListener('load', function (event) { prettyPrint() }, false);
    y[i] = Math.sin(i/5);
    z[i] = Math.sin((i+3)/5);
  }
- 
+
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500);
+fig = new matplot.Figure(&quot;plot&quot;,700,500);
 ax = fig.axes();
 
 // simple plot using indices as x-axis and values in parameter z as y-axis
 // The curve is draw with the given color. The label will be used later in the legend
-ax.plot(z,{color: 'red', label: 'foo'});
-      
+ax.plot(z,{color: &#x27;red&#x27;, label: &#x27;foo&#x27;});
+
 // define marker and marker size
-ax.plot(y,{color: 'blue', marker: 'o', markerSize: 5, label: 'bar'});
- 
+ax.plot(y,{color: &#x27;blue&#x27;, marker: &#x27;o&#x27;, markerSize: 5, label: &#x27;bar&#x27;});
+
 // make a dotted line with linespec
-ax.plot(x,y,{color: 'green', marker: 's', linewidth: 2, label: 'baz'});
+ax.plot(x,y,{color: &#x27;green&#x27;, marker: &#x27;s&#x27;, linewidth: 2, label: &#x27;baz&#x27;});
 
 // add legend
 ax.legend();
 
 // add annotation at the location x=20, y=0.6 and z=0 with the given text
-ax.annotation(20,0.6,0,'annotation');
+ax.annotation(20,0.6,0,&#x27;annotation&#x27;);
 
 // draw everything
 fig.draw();
 
-    </pre>    
+    </pre>
   </body>
 </html>

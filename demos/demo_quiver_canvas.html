@@ -15,10 +15,10 @@
 
 
    <script type="text/javascript">
-function init() {      
+function init() {
   
 var i,j,x=[],y=[],u=[], v=[];
-  
+
 // generate some data to plot
 for (i=0; i < 30; i++) {
   x[i] = [];
@@ -57,7 +57,7 @@ addEventListener('load', function (event) { prettyPrint() }, false);
     <pre class=prettyprint>
 
 var i,j,x=[],y=[],u=[], v=[];
-  
+
 // generate some data to plot
 for (i=0; i &lt; 30; i++) {
   x[i] = [];
@@ -73,15 +73,15 @@ for (i=0; i &lt; 30; i++) {
   }
 }
 
-fig = new matplot.Figure("plot",700,500, {renderer: matplot.RasterCanvas});
+fig = new matplot.Figure(&quot;plot&quot;,700,500, {renderer: matplot.RasterCanvas});
 ax = fig.axes();
-//ax.quiver(x,y,u,v,{scale: 0.1,color: 'green'});
-ax.quiver(x,y,u,v,{scale: 0.1,color: 'norm'});
+//ax.quiver(x,y,u,v,{scale: 0.1,color: &#x27;green&#x27;});
+ax.quiver(x,y,u,v,{scale: 0.1,color: &#x27;norm&#x27;});
 ax.DataAspectRatio([1,1,1]);
 ax.colorbar();
 
 fig.draw();
 
-    </pre>    
+    </pre>
   </body>
 </html>

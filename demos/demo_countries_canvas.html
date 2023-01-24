@@ -15,10 +15,10 @@
 <script type="text/javascript" src="countries.js"></script>
 
    <script type="text/javascript">
-function init() {      
+function init() {
   
 // the global variable 'countries' is loaded from the file countries.js
-var i,j, coord;  
+var i,j, coord;
 
 
 // make a figure of size 700 x 500 pixels
@@ -52,12 +52,12 @@ addEventListener('load', function (event) { prettyPrint() }, false);
     <h2>Code:</h2>
     <pre class=prettyprint>
 
-// the global variable 'countries' is loaded from the file countries.js
-var i,j, coord;  
+// the global variable &#x27;countries&#x27; is loaded from the file countries.js
+var i,j, coord;
 
 
 // make a figure of size 700 x 500 pixels
-fig = new matplot.Figure("plot",700,500, {renderer: matplot.RasterCanvas});
+fig = new matplot.Figure(&quot;plot&quot;,700,500, {renderer: matplot.RasterCanvas});
 
 // add axis to the figure
 ax = fig.axes();
@@ -67,13 +67,13 @@ for (i=0; i &lt; countries.length; i++) {
   for (j=0; j &lt; countries[i].coordinates.length; j++) {
     // countries[i].coordinates[j] is a list of [longitude,latitude]
     coord = numeric.transpose(countries[i].coordinates[j]);
-    ax.patch(coord[0],coord[1],{color: 'blue'});
+    ax.patch(coord[0],coord[1],{color: &#x27;blue&#x27;});
   }
 }
 
 // draw everything
 fig.draw();
 
-    </pre>    
+    </pre>
   </body>
 </html>
