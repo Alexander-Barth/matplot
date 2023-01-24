@@ -3,7 +3,7 @@ YUICOMPRESSOR=$(HOME)/opt/yuicompressor-2.4.8.jar
 SOURCE=demos/matplot.js
 
 LICENCE_HEADER=admin/license_header
-VERSION=0.1.3
+VERSION=0.1.4
 TARGET=matplot-$(VERSION).js
 TARGET_MIN=matplot-$(VERSION)-min.js
 
