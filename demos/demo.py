@@ -1,10 +1,11 @@
 #!/usr/bin/python
+
 from Cheetah.Template import Template
-from cgi import escape
+from html import escape
 
 version = '0.1.1';
-namespace = {'matplot_lib': '../matplot-' + version + '.js', 
-             'version': version, 
+namespace = {'matplot_lib': '../matplot-' + version + '.js',
+             'version': version,
              'renderer': ''};
 
 
@@ -25,7 +26,7 @@ templateDef='''
 $head
 
    <script type="text/javascript">
-function init() {      
+function init() {
   $javascript
 }
 
@@ -40,7 +41,7 @@ addEventListener('load', function (event) { prettyPrint() }, false);
     <h2>Code:</h2>
     <pre class=prettyprint>
 $javascript_escaped
-    </pre>    
+    </pre>
   </body>
 </html>
 '''
@@ -60,7 +61,7 @@ demos = [
    y[i] = Math.sin(i/5);
    z[i] = Math.sin((i+3)/5);
  }
- 
+
 // make a figure of size 700 x 500 pixels
 fig = new matplot.Figure($divid,700,500$renderer);
 ax = fig.axes();
@@ -68,10 +69,10 @@ ax = fig.axes();
 // simple plot using indices as x-axis and values in parameter z as y-axis
 // The curve is draw with the given color. The label will be used later in the legend
 ax.plot(z,{color: 'red', label: 'foo'});
-      
+
 // define marker and marker size
 ax.plot(y,{color: 'blue', marker: 'o', markerSize: 5, label: 'bar'});
- 
+
 // make a dotted line with linespec
 ax.plot(x,y,{color: 'green', marker: 's', linewidth: 2, label: 'baz'});
 
@@ -135,7 +136,7 @@ fig.draw();
      'head': '<script type="text/javascript" src="countries.js"></script>',
      'javascript': '''
 // the global variable 'countries' is loaded from the file countries.js
-var i,j, coord;  
+var i,j, coord;
 
 
 // make a figure of size 700 x 500 pixels
@@ -197,7 +198,7 @@ fig.draw();
       'name': 'quiver',
       'javascript': '''
 var i,j,x=[],y=[],u=[], v=[];
-  
+
 // generate some data to plot
 for (i=0; i < 30; i++) {
   x[i] = [];
@@ -230,7 +231,7 @@ fig.draw();
       'name': 'overlay',
       'javascript': '''
 var i,j, u=[], v=[], xq = [], yq = [];
-  
+
 // load the peaks sample data
 peaks = matplot.peaks();
 
@@ -278,7 +279,7 @@ fig.draw();
      'name': 'scatter',
      'javascript': '''
 var i,x=[],y=[],c=[];
-  
+
 
 // generate some data to plot
 // generate some data to plot
@@ -289,7 +290,7 @@ for (i=0; i < 100; i++) {
     x[i] = r*Math.cos(theta);
     y[i] = r*Math.sin(theta);
     c[i] = r;
-  
+
 }
 
 fig = new matplot.Figure($divid,700,500$renderer);
@@ -350,7 +351,7 @@ for (i=0; i < 4; i++) {
     y[i][j] = [];
     z[i][j] = [];
     c[i][j] = [];
-                
+
     for (k=0; k < 10; k++) {
       r = 20 + 5*i;
       phi = 2*Math.PI * j/19;
@@ -361,7 +362,7 @@ for (i=0; i < 4; i++) {
 
       x[i][j][k] = r * Math.sin(theta) * Math.cos(phi);
       y[i][j][k] = r * Math.sin(theta) * Math.sin(phi);
-      z[i][j][k] = r * Math.cos(theta);  
+      z[i][j][k] = r * Math.cos(theta);
       c[i][j][k] = r;
     }
   }
@@ -405,7 +406,7 @@ index = '''
     <h1>matplot</h1>
     <ul>
 $example
-    </ul>      
+    </ul>
   </body>
 </html>
 '''
@@ -416,15 +417,15 @@ def makeDemos(demos):
     for demo in demos:
         if 'head' not in demo:
             demo['head'] = ''
-    
+
         if onlySVG:
             example += ['<li><a href="demo_' + demo['name'] + '.html">'+ demo['description'] + "</a>"]
         else:
             example += ['<li>' + demo['description']]
- 
+
         for renderer in ['','matplot.RasterCanvas']:
 
-            print 'Making example:',demo['title']
+            print('Making example:',demo['title'])
             if renderer == 'matplot.RasterCanvas':
                 rtype = 'canvas'
                 filename = 'demo_' + demo['name'] + '_canvas' + '.html'
@@ -435,9 +436,9 @@ def makeDemos(demos):
                 namespace['renderer'] = ''
 
             example += [' <a href="',filename,'">',rtype,'</a> ']
-    
+
             javascript = demo['javascript'].replace('$renderer',namespace['renderer']).replace('$divid','"plot"')
-            
+
             f = open(filename,'w')
             f.write(str(Template(templateDef, searchList=[
                             {'javascript': javascript,
@@ -451,8 +452,7 @@ def makeDemos(demos):
     f = open('index.html','w')
     f.write(str(Template(index, searchList={'example': ''.join(example)})))
     f.close();
-    
+
 
 if __name__ == '__main__':
     makeDemos(demos)
-
